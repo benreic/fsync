@@ -30,7 +30,7 @@ func main() {
 	appFlickrOAuth := checkForExistingOAuthCredentials()
 
 	if appFlickrOAuth.OAuthToken != "" {
-		logMessage(l, "Using credentials for user: "+appFlickrOAuth.Username, true)
+		logMessage(l, fmt.Sprintf( "Using credentials for user: %v", appFlickrOAuth.Username), true)
 	} else {
 		appFlickrOAuth = doOAuthSetup()
 		if appFlickrOAuth.OAuthToken == "" {
@@ -59,11 +59,11 @@ func main() {
 		// Skip sets that already have all their files downloaded
 		existingFiles, _ := ioutil.ReadDir(dir)
 		if len(existingFiles) == (v.Photos + v.Videos + 1) {
-			logMessage(l, "Skipping set: `"+v.Title+"'. Found "+strconv.Itoa(len(existingFiles))+" existing files.", false)
+			logMessage(l, fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
 			continue
 		}
 
-		logMessage(l, "Processing set: `"+v.Title+"'.", false)
+		logMessage(l, fmt.Sprintf("Processing set: `%v'", v.Title), false)
 
 		metadataFile := filepath.Join(dir, "metadata.json")
 		var metadata Metadata
@@ -83,7 +83,7 @@ func main() {
 
 			originalUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
 			if originalUrl == "" {
-				logMessage(l, "Could not get original size for photo: `"+vv.Title+"' ("+vv.Id+")", false)
+				logMessage(l, fmt.Sprintf("Could not get original size for photo: `%v' (%v)", vv.Title, vv.Id), false)
 			} else {
 
 				// Create the file name from the url
@@ -92,7 +92,7 @@ func main() {
 
 				// Skip files that exist
 				if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
-					logMessage(l, "Photo existed at "+fullPath+", skipping.", false)
+					logMessage(l, fmt.Sprintf("Photo existed at %v. Skipping.", fullPath), false)
 					continue
 				}
 
@@ -106,7 +106,7 @@ func main() {
 				metadataBytes, _ := json.Marshal(metadata)
 				ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 
-				logMessage(l, "Saved photo `"+vv.Title+"' to "+fullPath, false)
+				logMessage(l, fmt.Sprintf("Saved photo `%v' to %v.", vv.Title, fullPath), false)
 			}
 		}
 	}
