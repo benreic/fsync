@@ -49,7 +49,8 @@ func main() {
 		// flickr orders the sets
 		t := time.Unix(int64(v.DateCreated), 0)
 		format := "20060102"
-		dir := filepath.Join(*rootDirectory, t.Format(format) + " " + v.Title)
+		cleanTitle := cleanTitle(v.Title)
+		dir := filepath.Join(*rootDirectory, t.Format(format) + " " + cleanTitle)
 		err := os.MkdirAll(dir, 0755)
 		if err != nil {
 			panic(err)
@@ -105,11 +106,21 @@ func main() {
 				metadataBytes, _ := json.Marshal(metadata)
 				ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 
-				logMessage(l, "Saved photo `" + vv.Title + "' to " + fileName, false)
+				logMessage(l, "Saved photo `" + vv.Title + "' to " + fullPath, false)
 			}
 		}
 	}
+}
 
+func cleanTitle(title string) string {
+
+	invalidChars := []string { "\\", "/", ":", ">", "<", "?", "\"", "|", "*" }
+
+	for _, char := range invalidChars {
+		title = strings.Replace(title, char, "", -1)
+	}
+
+	return title
 }
 
 // Extracts the photo file name from the url
