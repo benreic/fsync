@@ -1,18 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-	"time"
-	"os/exec"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"encoding/json"
 	"os"
+	"os/exec"
+	"strings"
+	"time"
 )
 
 var oauth_request_token_url = "http://www.flickr.com/services/oauth/request_token"
@@ -22,16 +22,16 @@ var cacheFile = "cache/oauth.json"
 var oauthSecretsFile = "cache/oauth-secrets.json"
 
 type FlickrOAuth struct {
-	FullName string
-	OAuthToken string
+	FullName         string
+	OAuthToken       string
 	OAuthTokenSecret string
-	UserNSID string
-	Username string
+	UserNSID         string
+	Username         string
 }
 
 type OAuthSecrets struct {
-	ConsumerKey string
-	Secret string
+	ConsumerKey  string
+	Secret       string
 	MinitokenUrl string
 }
 
@@ -41,7 +41,7 @@ type OAuthSecrets struct {
 func loadOAuthSecrets() OAuthSecrets {
 
 	s := new(OAuthSecrets)
-	if _, err := os.Stat(oauthSecretsFile); ! os.IsNotExist(err) {
+	if _, err := os.Stat(oauthSecretsFile); !os.IsNotExist(err) {
 		fileContents, _ := ioutil.ReadFile(oauthSecretsFile)
 		if len(fileContents) > 0 {
 			json.Unmarshal(fileContents, &s)
@@ -55,12 +55,12 @@ func loadOAuthSecrets() OAuthSecrets {
 	return *s
 }
 
-// Checks for cached oauth credentials so we don't need to 
+// Checks for cached oauth credentials so we don't need to
 // go through the oauth process again.
 func checkForExistingOAuthCredentials() FlickrOAuth {
 
 	var oauth = new(FlickrOAuth)
-	if _, err := os.Stat(cacheFile); ! os.IsNotExist(err) {
+	if _, err := os.Stat(cacheFile); !os.IsNotExist(err) {
 		fileContents, _ := ioutil.ReadFile(cacheFile)
 		if len(fileContents) > 0 {
 			json.Unmarshal(fileContents, &oauth)
@@ -73,7 +73,7 @@ func checkForExistingOAuthCredentials() FlickrOAuth {
 // Does the oauth handshaking with flickr and the user
 func doOAuthSetup() FlickrOAuth {
 
-	oauthResult := FlickrOAuth { "", "", "", "", "" }
+	oauthResult := FlickrOAuth{"", "", "", "", ""}
 
 	// Get the request token url
 	var oauth_request_token_request = generateRequestTokenUrl()
@@ -172,7 +172,9 @@ func doOAuthSetup() FlickrOAuth {
 	b, err := json.Marshal(oauthResult)
 
 	err = ioutil.WriteFile(cacheFile, b, 0644)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	return oauthResult
 }
 
@@ -198,7 +200,6 @@ func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraPara
 		}
 	}
 
-
 	apiSignature := createApiSignature(baseUrl, "GET", params, secrets.Secret, &auth.OAuthTokenSecret)
 	params["oauth_signature"] = apiSignature
 
@@ -210,7 +211,6 @@ func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraPara
 	requestUrl = strings.TrimRight(requestUrl, "&")
 	return requestUrl
 }
-
 
 // Generates the exchange token url, used during oauth handshaking
 func generateExchangeUrl(userToken string, oauthToken string, tokenSecret string) string {
@@ -266,7 +266,6 @@ func generateRequestTokenUrl() string {
 
 	return requestUrl
 }
-
 
 // Creates the api signature for flickr's oauth implementation
 func createApiSignature(

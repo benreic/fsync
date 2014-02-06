@@ -1,16 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-	"time"
-	"strings"
-	"os"
-	"strconv"
-	"path/filepath"
 	"io/ioutil"
-	"encoding/json"
 	"log"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var appFlickrOAuth = new(FlickrOAuth)
@@ -30,7 +30,7 @@ func main() {
 	appFlickrOAuth := checkForExistingOAuthCredentials()
 
 	if appFlickrOAuth.OAuthToken != "" {
-		logMessage(l, "Using credentials for user: " + appFlickrOAuth.Username, true)
+		logMessage(l, "Using credentials for user: "+appFlickrOAuth.Username, true)
 	} else {
 		appFlickrOAuth = doOAuthSetup()
 		if appFlickrOAuth.OAuthToken == "" {
@@ -50,7 +50,7 @@ func main() {
 		t := time.Unix(int64(v.DateCreated), 0)
 		format := "20060102"
 		cleanTitle := cleanTitle(v.Title)
-		dir := filepath.Join(*rootDirectory, t.Format(format) + " " + cleanTitle)
+		dir := filepath.Join(*rootDirectory, t.Format(format)+" "+cleanTitle)
 		err := os.MkdirAll(dir, 0755)
 		if err != nil {
 			panic(err)
@@ -59,22 +59,22 @@ func main() {
 		// Skip sets that already have all their files downloaded
 		existingFiles, _ := ioutil.ReadDir(dir)
 		if len(existingFiles) == (v.Photos + v.Videos + 1) {
-			logMessage(l, "Skipping set: `" + v.Title + "'. Found " + strconv.Itoa(len(existingFiles)) + " existing files.", false)
+			logMessage(l, "Skipping set: `"+v.Title+"'. Found "+strconv.Itoa(len(existingFiles))+" existing files.", false)
 			continue
 		}
 
-		logMessage(l, "Processing set: `" + v.Title + "'.", false)
+		logMessage(l, "Processing set: `"+v.Title+"'.", false)
 
 		metadataFile := filepath.Join(dir, "metadata.json")
 		var metadata Metadata
 
 		// Read the existing metadata, or create a new struct if none is found,
-		// so we can pick up where we left off 
-		if _, err := os.Stat(metadataFile); ! os.IsNotExist(err) {
+		// so we can pick up where we left off
+		if _, err := os.Stat(metadataFile); !os.IsNotExist(err) {
 			existingMetadata, _ := ioutil.ReadFile(metadataFile)
 			err = json.Unmarshal(existingMetadata, &metadata)
 		} else {
-			metadata = Metadata { Photos : []PhotoMetadata { }, SetId : v.Id }
+			metadata = Metadata{Photos: []PhotoMetadata{}, SetId: v.Id}
 		}
 
 		// Get all the photos for this set and loop over them
@@ -83,7 +83,7 @@ func main() {
 
 			originalUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
 			if originalUrl == "" {
-				logMessage(l, "Could not get original size for photo: `" + vv.Title + "' (" + vv.Id + ")", false)
+				logMessage(l, "Could not get original size for photo: `"+vv.Title+"' ("+vv.Id+")", false)
 			} else {
 
 				// Create the file name from the url
@@ -91,22 +91,22 @@ func main() {
 				fullPath := filepath.Join(dir, fileName)
 
 				// Skip files that exist
-				if _, err := os.Stat(fullPath); ! os.IsNotExist(err) {
-					logMessage(l, "Photo existed at " + fullPath + ", skipping.", false)
+				if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
+					logMessage(l, "Photo existed at "+fullPath+", skipping.", false)
 					continue
 				}
 
 				// Save photo to disk
 				savePhotoToFile(appFlickrOAuth, originalUrl, fullPath)
-				
+
 				// Add the photos metadata to the list and write the metadata file out
-				p := PhotoMetadata { PhotoId : vv.Id, Title : vv.Title, Filename : fileName }
+				p := PhotoMetadata{PhotoId: vv.Id, Title: vv.Title, Filename: fileName}
 				slice := append(metadata.Photos, p)
 				metadata.Photos = slice
 				metadataBytes, _ := json.Marshal(metadata)
 				ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 
-				logMessage(l, "Saved photo `" + vv.Title + "' to " + fullPath, false)
+				logMessage(l, "Saved photo `"+vv.Title+"' to "+fullPath, false)
 			}
 		}
 	}
@@ -114,7 +114,7 @@ func main() {
 
 func cleanTitle(title string) string {
 
-	invalidChars := []string { "\\", "/", ":", ">", "<", "?", "\"", "|", "*" }
+	invalidChars := []string{"\\", "/", ":", ">", "<", "?", "\"", "|", "*"}
 
 	for _, char := range invalidChars {
 		title = strings.Replace(title, char, "", -1)
@@ -151,10 +151,10 @@ func createLogger() *log.Logger {
 		panic(err)
 	}
 
-	filePath := filepath.Join(logDir, "fsync-" + filePart + ".log")
+	filePath := filepath.Join(logDir, "fsync-"+filePart+".log")
 
 	fi, _ := os.Create(filePath)
-	l := log.New(fi, "",  log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+	l := log.New(fi, "", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 	return l
 }
 
@@ -167,15 +167,14 @@ func logMessage(l *log.Logger, message string, echo bool) {
 	}
 }
 
-type Metadata struct { 
-	SetId string
+type Metadata struct {
+	SetId  string
 	Photos []PhotoMetadata
 }
 
 // Photo metadata struct
 type PhotoMetadata struct {
-	PhotoId string
-	Title string
+	PhotoId  string
+	Title    string
 	Filename string
 }
-

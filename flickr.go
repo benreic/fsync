@@ -1,9 +1,9 @@
 package main
 
 import (
-	"net/http"
-	"io/ioutil"
 	"encoding/xml"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -13,64 +13,63 @@ var apiBaseUrl = "http://api.flickr.com/services/rest"
 var setsCacheFile = "cache/sets.xml"
 
 type PhotosetsResponse struct {
-	XMLName xml.Name `xml:"rsp"`
+	XMLName      xml.Name `xml:"rsp"`
 	SetContainer Photosets
 }
 
 type Photosets struct {
-	XMLName xml.Name `xml:"photosets"`
-	Total string `xml:"total,attr"`
-	Sets []Photoset `xml:"photoset"`
+	XMLName xml.Name   `xml:"photosets"`
+	Total   string     `xml:"total,attr"`
+	Sets    []Photoset `xml:"photoset"`
 }
 
 type Photoset struct {
-	XMLName xml.Name `xml:"photoset"`
-	Id string `xml:"id,attr"`
-	DateCreated int `xml:"date_create,attr"`
-	Photos int `xml:"photos,attr"`
-	Videos int `xml:"videos,attr"`
-	Title string `xml:"title"`
+	XMLName     xml.Name `xml:"photoset"`
+	Id          string   `xml:"id,attr"`
+	DateCreated int      `xml:"date_create,attr"`
+	Photos      int      `xml:"photos,attr"`
+	Videos      int      `xml:"videos,attr"`
+	Title       string   `xml:"title"`
 }
 
 type PhotosResponse struct {
 	XMLName xml.Name `xml:"rsp"`
-	Set PhotosPhotoset
+	Set     PhotosPhotoset
 }
 
 type PhotosPhotoset struct {
 	XMLName xml.Name `xml:"photoset"`
-	Id string `xml:"id,attr"`
-	Photos []Photo `xml:"photo"`
+	Id      string   `xml:"id,attr"`
+	Photos  []Photo  `xml:"photo"`
 }
 
 type Photo struct {
 	XMLName xml.Name `xml:"photo"`
-	Id string `xml:"id,attr"`
-	Title string `xml:"title,attr"`
+	Id      string   `xml:"id,attr"`
+	Title   string   `xml:"title,attr"`
 }
 
 type PhotoSizeResponse struct {
-	XMLName xml.Name `xml:"rsp"`
+	XMLName        xml.Name           `xml:"rsp"`
 	SizesContainer PhotoSizeContainer `xml:"sizes"`
 }
 
-type PhotoSizeContainer struct { 
-	XMLName xml.Name `xml:"sizes"`
-	Sizes []PhotoSize `xml:"size"`
+type PhotoSizeContainer struct {
+	XMLName xml.Name    `xml:"sizes"`
+	Sizes   []PhotoSize `xml:"size"`
 }
 
 type PhotoSize struct {
 	XMLName xml.Name `xml:"size"`
-	Label string `xml:"label,attr"`
-	Url string `xml:"source,attr"`
+	Label   string   `xml:"label,attr"`
+	Url     string   `xml:"source,attr"`
 }
 
 type ByDateCreated []Photoset
 
-func (a ByDateCreated) Len() int { return len(a) }
-func (a ByDateCreated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByDateCreated) Len() int           { return len(a) }
+func (a ByDateCreated) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByDateCreated) Less(i, j int) bool { return a[i].DateCreated < a[j].DateCreated }
-
 
 func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 
@@ -100,7 +99,7 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 		}
 	}
 
-	sets := PhotosetsResponse { }
+	sets := PhotosetsResponse{}
 	err = xml.Unmarshal(body, &sets)
 	if err != nil {
 		panic(err)
@@ -111,17 +110,16 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 	return sets
 }
 
-
 func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 
 	var err error
 	var resp *http.Response
 	var body []byte
-	photos := map[string]Photo { }
+	photos := map[string]Photo{}
 	currentPage := 1
 
 	for {
-		extras := map[string]string { "photoset_id": set.Id, "per_page": "500", "page":strconv.Itoa(currentPage)  }
+		extras := map[string]string{"photoset_id": set.Id, "per_page": "500", "page": strconv.Itoa(currentPage)}
 		requestUrl := generateOAuthUrl(apiBaseUrl, "flickr.photosets.getPhotos", flickrOAuth, &extras)
 
 		resp, err = http.Get(requestUrl)
@@ -134,7 +132,7 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 			panic(err)
 		}
 
-		response := PhotosResponse { }
+		response := PhotosResponse{}
 		err = xml.Unmarshal(body, &response)
 		if err != nil {
 			panic(err)
@@ -156,7 +154,7 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 
 func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) string {
 
-	extras := map[string]string { "photo_id":photo.Id  }
+	extras := map[string]string{"photo_id": photo.Id}
 	requestUrl := generateOAuthUrl(apiBaseUrl, "flickr.photos.getSizes", flickrOauth, &extras)
 
 	var err error
@@ -171,7 +169,7 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) string {
 		panic(err)
 	}
 
-	response := PhotoSizeResponse{ }
+	response := PhotoSizeResponse{}
 	err = xml.Unmarshal(body, &response)
 	if err != nil {
 		panic(err)
