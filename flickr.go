@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"time"
 )
 
 var apiBaseUrl = "http://api.flickr.com/services/rest"
@@ -190,12 +191,21 @@ func savePhotoToFile(flickrOauth FlickrOAuth, url string, fullPath string) {
 	var resp *http.Response
 	resp, err = http.Get(url)
 	if err != nil {
-		panic(err)
+		time.Sleep(500 * time.Millisecond)
+		resp, err = http.Get(url)
+		if err != nil {
+			panic(err)
+		}
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		time.Sleep(500 * time.Millisecond)
+		body, err = ioutil.ReadAll(resp.Body)
+		if (err != nil) {
+			panic(err)
+		}
 	}
 
 	err = ioutil.WriteFile(fullPath, body, 0644)
