@@ -15,26 +15,27 @@ import (
 
 var appFlickrOAuth = new(FlickrOAuth)
 var rootDirectory = flag.String("dir", "", "The base directory where your sets/photos will be downloaded.")
+var Flogger *log.Logger
 
 func main() {
 
 	flag.Parse()
+
+	Flogger = createLogger()
 
 	if *rootDirectory == "" {
 		fmt.Println("You must specify a root directory using -dir")
 		return
 	}
 
-	l := createLogger()
-
 	appFlickrOAuth := checkForExistingOAuthCredentials()
 
 	if appFlickrOAuth.OAuthToken != "" {
-		logMessage(l, fmt.Sprintf( "Using credentials for user: %v", appFlickrOAuth.Username), true)
+		logMessage(fmt.Sprintf("Using credentials for user: %v", appFlickrOAuth.Username), true)
 	} else {
 		appFlickrOAuth = doOAuthSetup()
 		if appFlickrOAuth.OAuthToken == "" {
-			logMessage(l, "Could not get OAuth token setup.", true)
+			logMessage("Could not get OAuth token setup.", true)
 			return
 		}
 	}
@@ -59,11 +60,11 @@ func main() {
 		// Skip sets that already have all their files downloaded
 		existingFiles, _ := ioutil.ReadDir(dir)
 		if len(existingFiles) == (v.Photos + v.Videos + 1) {
-			logMessage(l, fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
+			logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
 			continue
 		}
 
-		logMessage(l, fmt.Sprintf("Processing set: `%v'", v.Title), false)
+		logMessage(fmt.Sprintf("Processing set: `%v'", v.Title), false)
 
 		metadataFile := filepath.Join(dir, "metadata.json")
 		var metadata Metadata
@@ -83,7 +84,7 @@ func main() {
 
 			originalUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
 			if originalUrl == "" {
-				logMessage(l, fmt.Sprintf("Could not get original size for photo: `%v' (%v)", vv.Title, vv.Id), false)
+				logMessage(fmt.Sprintf("Could not get original size for photo: `%v' (%v)", vv.Title, vv.Id), false)
 			} else {
 
 				// Create the file name from the url
@@ -92,7 +93,7 @@ func main() {
 
 				// Skip files that exist
 				if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
-					logMessage(l, fmt.Sprintf("Photo existed at %v. Skipping.", fullPath), false)
+					logMessage(fmt.Sprintf("Photo existed at %v. Skipping.", fullPath), false)
 					continue
 				}
 
@@ -106,7 +107,7 @@ func main() {
 				metadataBytes, _ := json.Marshal(metadata)
 				ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 
-				logMessage(l, fmt.Sprintf("Saved photo `%v' to %v.", vv.Title, fullPath), false)
+				logMessage(fmt.Sprintf("Saved photo `%v' to %v.", vv.Title, fullPath), false)
 			}
 		}
 	}
@@ -159,9 +160,9 @@ func createLogger() *log.Logger {
 }
 
 // Logs a message and optionally echos it to stdout
-func logMessage(l *log.Logger, message string, echo bool) {
+func logMessage(message string, echo bool) {
 
-	l.Println(message)
+	Flogger.Println(message)
 	if echo {
 		fmt.Println(message)
 	}

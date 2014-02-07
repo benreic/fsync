@@ -3,11 +3,9 @@ package main
 import (
 	"encoding/xml"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"sort"
 	"strconv"
-	"time"
 )
 
 var apiBaseUrl = "http://api.flickr.com/services/rest"
@@ -76,17 +74,11 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 
 	var body []byte
 	var err error
-	var resp *http.Response
 	if _, err := os.Stat(setsCacheFile); os.IsNotExist(err) {
 
 		getSetsUrl := generateGetSetsUrl(flickrOAuth)
 
-		resp, err = http.Get(getSetsUrl)
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-		body, err = ioutil.ReadAll(resp.Body)
+		body, err = makeGetRequest(getSetsUrl)
 		if err != nil {
 			panic(err)
 		}
@@ -114,7 +106,6 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 
 	var err error
-	var resp *http.Response
 	var body []byte
 	photos := map[string]Photo{}
 	currentPage := 1
@@ -123,12 +114,7 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 		extras := map[string]string{"photoset_id": set.Id, "per_page": "500", "page": strconv.Itoa(currentPage)}
 		requestUrl := generateOAuthUrl(apiBaseUrl, "flickr.photosets.getPhotos", flickrOAuth, &extras)
 
-		resp, err = http.Get(requestUrl)
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-		body, err = ioutil.ReadAll(resp.Body)
+		body, err = makeGetRequest(requestUrl)
 		if err != nil {
 			panic(err)
 		}
@@ -159,13 +145,9 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) string {
 	requestUrl := generateOAuthUrl(apiBaseUrl, "flickr.photos.getSizes", flickrOauth, &extras)
 
 	var err error
-	var resp *http.Response
-	resp, err = http.Get(requestUrl)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	var body []byte
+
+	body, err = makeGetRequest(requestUrl)
 	if err != nil {
 		panic(err)
 	}
@@ -188,24 +170,11 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) string {
 func savePhotoToFile(flickrOauth FlickrOAuth, url string, fullPath string) {
 
 	var err error
-	var resp *http.Response
-	resp, err = http.Get(url)
-	if err != nil {
-		time.Sleep(500 * time.Millisecond)
-		resp, err = http.Get(url)
-		if err != nil {
-			panic(err)
-		}
-	}
-	defer resp.Body.Close()
 	var body []byte
-	body, err = ioutil.ReadAll(resp.Body)
+
+	body, err = makeGetRequest(url)
 	if err != nil {
-		time.Sleep(500 * time.Millisecond)
-		body, err = ioutil.ReadAll(resp.Body)
-		if (err != nil) {
-			panic(err)
-		}
+		panic(err)
 	}
 
 	err = ioutil.WriteFile(fullPath, body, 0644)

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -80,15 +79,7 @@ func doOAuthSetup() FlickrOAuth {
 
 	// Get the response from the request token url
 	// and check for errors
-	resp, err := http.Get(oauth_request_token_request)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
+	body, err := makeGetRequest(oauth_request_token_request)
 
 	// Parse the oauth token and oauth token secret values
 	// from the body response.
@@ -132,15 +123,7 @@ func doOAuthSetup() FlickrOAuth {
 	exchangeForRealTokenUrl := generateExchangeUrl(userToken, oauth_token, oauth_token_secret)
 
 	// Get the response and check for errors
-	resp, err = http.Get(exchangeForRealTokenUrl)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	body, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
+	body, err = makeGetRequest(exchangeForRealTokenUrl)
 
 	// Parse the result for the oauth token
 	parts = strings.Split(string(body), "&")
