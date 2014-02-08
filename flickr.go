@@ -142,6 +142,8 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 		currentPage++
 	}
 
+	currentPage = 1
+
 	return photos
 }
 
