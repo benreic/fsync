@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -74,11 +75,12 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 
 	var body []byte
 	var err error
+	var requestUrl string
 	if _, err := os.Stat(setsCacheFile); os.IsNotExist(err) {
 
-		getSetsUrl := generateGetSetsUrl(flickrOAuth)
+		requestUrl = generateGetSetsUrl(flickrOAuth)
 
-		body, err = makeGetRequest(getSetsUrl)
+		body, err = makeGetRequest(requestUrl)
 		if err != nil {
 			panic(err)
 		}
@@ -95,7 +97,7 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 	sets := PhotosetsResponse{}
 	err = xml.Unmarshal(body, &sets)
 	if err != nil {
-		logMessage("Could not unmarshal body. Check logs for body detail.", true)
+		logMessage(fmt.Sprintf("Could not unmarshal body for `%v'. Check logs for body detail.", requestUrl), true)
 		logMessage(string(body), false)
 		panic(err)
 	}
@@ -124,7 +126,7 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 		response := PhotosResponse{}
 		err = xml.Unmarshal(body, &response)
 		if err != nil {
-			logMessage("Could not unmarshal body. Check logs for body detail.", true)
+			logMessage(fmt.Sprintf("Could not unmarshal body for `%v'. Check logs for body detail.", requestUrl), true)
 			logMessage(string(body), false)
 			panic(err)
 		}
@@ -159,9 +161,9 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) string {
 	response := PhotoSizeResponse{}
 	err = xml.Unmarshal(body, &response)
 	if err != nil {
-		logMessage("Could not unmarshal body. Check logs for body detail.", true)
+		logMessage(fmt.Sprintf("Could not unmarshal body for `%v'. Check logs for body detail.", requestUrl), true)
 		logMessage(string(body), false)
-		panic(err)
+		return ""
 	}
 
 	for _, v := range response.SizesContainer.Sizes {

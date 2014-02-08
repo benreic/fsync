@@ -84,7 +84,7 @@ func main() {
 
 			originalUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
 			if originalUrl == "" {
-				logMessage(fmt.Sprintf("Could not get original size for photo: `%v' (%v)", vv.Title, vv.Id), false)
+				logMessage(fmt.Sprintf("Could not get original size for photo: `%v' (%v). Skipping photo for now.", vv.Title, vv.Id), false)
 			} else {
 
 				// Create the file name from the url
