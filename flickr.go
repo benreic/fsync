@@ -135,7 +135,7 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 			photos[v.Id] = v
 		}
 
-		if len(photos) == (set.Photos + set.Videos) {
+		if len(photos) >= (set.Photos + set.Videos) {
 			break
 		}
 
