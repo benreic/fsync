@@ -95,6 +95,8 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 	sets := PhotosetsResponse{}
 	err = xml.Unmarshal(body, &sets)
 	if err != nil {
+		logMessage("Could not unmarshal body. Check logs for body detail.", true)
+		logMessage(string(body), false)
 		panic(err)
 	}
 
@@ -122,6 +124,8 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 		response := PhotosResponse{}
 		err = xml.Unmarshal(body, &response)
 		if err != nil {
+			logMessage("Could not unmarshal body. Check logs for body detail.", true)
+			logMessage(string(body), false)
 			panic(err)
 		}
 
@@ -155,6 +159,8 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) string {
 	response := PhotoSizeResponse{}
 	err = xml.Unmarshal(body, &response)
 	if err != nil {
+		logMessage("Could not unmarshal body. Check logs for body detail.", true)
+		logMessage(string(body), false)
 		panic(err)
 	}
 
