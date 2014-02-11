@@ -12,6 +12,17 @@ import (
 var apiBaseUrl = "http://api.flickr.com/services/rest"
 var setsCacheFile = "cache/sets.xml"
 
+type FlickrErrorResponse struct {
+	XMLName xml.Name `xml:"rsp"`
+	Error FlickrError
+}
+
+type FlickrError struct {
+	XMLName xml.Name `xml:"err"`
+	Code string `xml:"code,attr"`
+	Message string `xml:"msg,attr"`
+}
+
 type PhotosetsResponse struct {
 	XMLName      xml.Name `xml:"rsp"`
 	SetContainer Photosets
@@ -126,23 +137,40 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 		response := PhotosResponse{}
 		err = xml.Unmarshal(body, &response)
 		if err != nil {
-			logMessage(fmt.Sprintf("Could not unmarshal body for `%v'. Check logs for body detail.", requestUrl), true)
+
+			// We couldn't unmarshal the response as photos, but it might be the case
+			// that we just ran out of photos, i.e. the set has a multiple of 500 photos in it
+			// Lets try to unmarshal the response as an error, and if it is, error code "1" means
+			// we're good and we can take what we've got and roll on.
+			errorResponse := FlickrErrorResponse{}
+			err = xml.Unmarshal(body, &errorResponse)
+			if err != nil {
+				logMessage(fmt.Sprintf("Could not unmarshal body for `%v' Tried PhotosResponse and then FlickrErrorResponse. Check logs for body detail.", requestUrl), true)
+				logMessage(string(body), false)
+				panic(err)
+			}
+
+			// The "good" error code
+			if errorResponse.Error.Code == "1" {
+				break
+			}
+
+			logMessage(fmt.Sprintf("An error occurred while getting photos for the set. Check the body in the logs. Url: %v", requestUrl), false)
 			logMessage(string(body), false)
-			panic(err)
 		}
 
 		for _, v := range response.Set.Photos {
 			photos[v.Id] = v
 		}
 
-		if len(photos) >= (set.Photos + set.Videos) {
+		// If we didn't get 500 photos, then we're done.
+		// There are no more photos to get.
+		if len(response.Set.Photos) < 500 {
 			break
 		}
 
 		currentPage++
 	}
-
-	currentPage = 1
 
 	return photos
 }
