@@ -57,9 +57,12 @@ func main() {
 			panic(err)
 		}
 
+		// Get all the photos for this set and loop over them
+		photos := getPhotosForSet(appFlickrOAuth, v)
+
 		// Skip sets that already have all their files downloaded
 		existingFiles, _ := ioutil.ReadDir(dir)
-		if len(existingFiles) == (v.Photos + v.Videos + 1) {
+		if len(existingFiles) == len(photos) + 1 {
 			logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
 			continue
 		}
@@ -78,8 +81,6 @@ func main() {
 			metadata = Metadata{Photos: []PhotoMetadata{}, SetId: v.Id}
 		}
 
-		// Get all the photos for this set and loop over them
-		photos := getPhotosForSet(appFlickrOAuth, v)
 		for _, vv := range photos {
 
 			originalUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
