@@ -3,14 +3,11 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"sort"
 	"strconv"
 )
 
 var apiBaseUrl = "http://api.flickr.com/services/rest"
-var setsCacheFile = "cache/sets.xml"
 
 type FlickrErrorResponse struct {
 	XMLName xml.Name `xml:"rsp"`
@@ -84,25 +81,11 @@ func (a ByDateCreated) Less(i, j int) bool { return a[i].DateCreated < a[j].Date
 
 func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 
-	var body []byte
-	var err error
-	var requestUrl string
-	if _, err := os.Stat(setsCacheFile); os.IsNotExist(err) {
+	requestUrl := generateGetSetsUrl(flickrOAuth)
 
-		requestUrl = generateGetSetsUrl(flickrOAuth)
-
-		body, err = makeGetRequest(requestUrl)
-		if err != nil {
-			panic(err)
-		}
-
-		ioutil.WriteFile(setsCacheFile, body, 0644)
-
-	} else {
-		body, err = ioutil.ReadFile(setsCacheFile)
-		if err != nil {
-			panic(err)
-		}
+	body, err := makeGetRequest(requestUrl)
+	if err != nil {
+		panic(err)
 	}
 
 	sets := PhotosetsResponse{}
