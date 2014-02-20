@@ -15,6 +15,7 @@ import (
 
 var appFlickrOAuth = new(FlickrOAuth)
 var rootDirectory = flag.String("dir", "", "The base directory where your sets/photos will be downloaded.")
+var forceProcessing = flag.Bool("force", false, "Force processing of each set; don't skip sets even if file counts match")
 var Flogger *log.Logger
 
 func main() {
@@ -60,11 +61,13 @@ func main() {
 		// Get all the photos for this set and loop over them
 		photos := getPhotosForSet(appFlickrOAuth, v)
 
-		// Skip sets that already have all their files downloaded
-		existingFiles, _ := ioutil.ReadDir(dir)
-		if len(existingFiles) == len(photos) + 1 {
-			logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
-			continue
+		if *forceProcessing != true {
+			// Skip sets that already have all their files downloaded
+			existingFiles, _ := ioutil.ReadDir(dir)
+			if len(existingFiles) == len(photos) + 1 {
+				logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
+				continue
+			}
 		}
 
 		logMessage(fmt.Sprintf("Processing set: `%v'", v.Title), false)
