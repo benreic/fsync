@@ -175,7 +175,7 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 	return photos
 }
 
-func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) string {
+func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
 
 	extras := map[string]string{"photo_id": photo.Id}
 	requestUrl := generateOAuthUrl(apiBaseUrl, "flickr.photos.getSizes", flickrOauth, &extras)
@@ -193,30 +193,25 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) string {
 	if err != nil {
 		logMessage(fmt.Sprintf("Could not unmarshal body for `%v'. Check logs for body detail.", requestUrl), true)
 		logMessage(string(body), false)
-		return ""
+		return "", ""
 	}
 
+	photoUrl := ""
+	videoUrl := ""
 	for _, v := range response.SizesContainer.Sizes {
 		if v.Label == "Original" {
-			return v.Url
+			photoUrl = v.Url
+		}
+		
+		if v.Label == "Video Original" {
+			videoUrl = v.Url
 		}
 	}
 
-	return ""
+	return photoUrl, videoUrl
 }
 
-func savePhotoToFile(flickrOauth FlickrOAuth, url string, fullPath string) {
 
-	var err error
-	var body []byte
-
-	body, err = makeGetRequest(url)
-	if err != nil {
-		panic(err)
-	}
-
-	err = ioutil.WriteFile(fullPath, body, 0644)
-}
 
 func generateGetSetsUrl(flickrOauth FlickrOAuth) string {
 

@@ -74,45 +74,114 @@ func main() {
 
 		// Read the existing metadata, or create a new struct if none is found,
 		// so we can pick up where we left off
-		if _, err := os.Stat(metadataFile); !os.IsNotExist(err) {
+		if fileExists(metadataFile) {
 			existingMetadata, _ := ioutil.ReadFile(metadataFile)
 			err = json.Unmarshal(existingMetadata, &metadata)
 		} else {
 			metadata = Metadata{Photos: []PhotoMetadata{}, SetId: v.Id}
 		}
 
+
+		var fullPath string
+		var fileName string
+		var sourceUrl string
+		var mediaType string
 		for _, vv := range photos {
 
-			originalUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
-			if originalUrl == "" {
-				logMessage(fmt.Sprintf("Could not get original size for photo: `%v' (%v). Skipping photo for now.", vv.Title, vv.Id), false)
-			} else {
+			// Get the photo and video url (if one exists)
+			photoUrl, videoUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
 
-				// Create the file name from the url
-				fileName := getFileNameFromUrl(originalUrl)
-				fullPath := filepath.Join(dir, fileName)
+			if videoUrl != "" {
 
-				// Skip files that exist
-				if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
-					logMessage(fmt.Sprintf("Photo existed at %v. Skipping.", fullPath), false)
-					continue
+				// If we erroneously downloaded a video as a photo
+				// before, lets delete it before getting the actual video
+				if photoUrl != "" {
+
+					// Create the photo file name from the url
+					fileName = getFileNameFromUrl(photoUrl)
+					fullPath = filepath.Join(dir, fileName)
+
+					// Remove the photo, if we found one
+					if fileExists(fullPath) {
+						os.Remove(fullPath)
+						logMessage(fmt.Sprintf("Deleted the video's photo located at: %v.", fullPath), false)
+					}
 				}
 
-				// Save photo to disk
-				savePhotoToFile(appFlickrOAuth, originalUrl, fullPath)
+				fileName = vv.Id + ".mov"
+				sourceUrl = videoUrl
+				mediaType = "video"
+				
+			} else if photoUrl != "" {
 
-				// Add the photos metadata to the list and write the metadata file out
-				p := PhotoMetadata{PhotoId: vv.Id, Title: vv.Title, Filename: fileName}
-				slice := append(metadata.Photos, p)
-				metadata.Photos = slice
-				metadataBytes, _ := json.Marshal(metadata)
-				ioutil.WriteFile(metadataFile, metadataBytes, 0755)
+				// Create the file name from the url
+				fileName = getFileNameFromUrl(photoUrl)
+				sourceUrl = photoUrl
+				mediaType = "photo"
+				
+			} else {
 
-				logMessage(fmt.Sprintf("Saved photo `%v' to %v.", vv.Title, fullPath), false)
+				logMessage(fmt.Sprintf("Could not get original size for media: `%v' (%v). Skipping media for now.", vv.Title, vv.Id), false)
+				continue
 			}
+
+
+			fullPath = filepath.Join(dir, fileName)
+
+			// Skip files that exist
+			if fileExists(fullPath) {
+				logMessage(fmt.Sprintf("Media existed at %v. Skipping.", fullPath), false)
+				continue
+			}
+
+			// Save video to disk
+			saveUrlToFile(appFlickrOAuth, sourceUrl, fullPath)
+
+			// Add the photos metadata to the list and write the metadata file out
+			saveMediaMetadata(vv, fileName, metadata, metadataFile)
+
+			logMessage(fmt.Sprintf("Saved %v `%v' to %v.", mediaType, vv.Title, fullPath), false)
+
+
 		}
 	}
 }
+
+
+func saveMediaMetadata(media Photo, fileName string, metadata Metadata, metadataFile string) {
+
+	p := PhotoMetadata{PhotoId: media.Id, Title: media.Title, Filename: fileName}
+	slice := append(metadata.Photos, p)
+	metadata.Photos = slice
+	metadataBytes, _ := json.Marshal(metadata)
+	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
+}
+
+
+func fileExists(fullPath string) bool {
+
+	if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
+		return true
+	}
+
+	return false
+
+}
+
+
+func saveUrlToFile(flickrOauth FlickrOAuth, url string, fullPath string) {
+
+	var err error
+	var body []byte
+
+	body, err = makeGetRequest(url)
+	if err != nil {
+		panic(err)
+	}
+
+	err = ioutil.WriteFile(fullPath, body, 0644)
+}
+
 
 func cleanTitle(title string) string {
 
