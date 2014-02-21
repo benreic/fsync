@@ -19,6 +19,8 @@ var forceProcessing = flag.Bool("force", false, "Force processing of each set; d
 var auditOnly = flag.Bool("audit", false, "Compares existing media with the media on Flickr and displays the differences")
 var Flogger *log.Logger
 
+var setMetadataFileName = "metadata.json"
+
 func main() {
 
 	flag.Parse()
@@ -64,7 +66,7 @@ func main() {
 
 		existingFiles, _ := ioutil.ReadDir(dir)
 
-		metadataFile := filepath.Join(dir, "metadata.json")
+		metadataFile := filepath.Join(dir, setMetadataFileName)
 		var metadata Metadata
 
 		// Read the existing metadata, or create a new struct if none is found,
@@ -165,33 +167,48 @@ that don't exist in the metadata, these need to be downloaded.
 
 Loop through the media in the metadata. Any that don't exist in the set should be deleted and removed from the metadata.
 
+Loop through the file and make sure they are all in the metadata.
+
 */
 func auditSet(existingFiles []os.FileInfo, metadata Metadata, photos map[string]Photo, set Photoset) {
 
 	logMessage(fmt.Sprintf("Auditing set: `%v'", set.Title), true)
 
 	// Convert the metadata into a map for ease of use
-	metadataMap := map[string]PhotoMetadata{}
+	photoIdMap := map[string]PhotoMetadata{}
+	fileNameMap := map[string]PhotoMetadata{}
 
 	for _, pm := range metadata.Photos {
-		metadataMap[pm.PhotoId] = pm
+		photoIdMap[pm.PhotoId] = pm
+		fileNameMap[pm.Filename] = pm
 	}
 
 	// Find photos that don't exist on disk and need to be downloaded
 	for photoId, photo := range photos {
 
-		_, valueExists := metadataMap[photoId]
+		_, valueExists := photoIdMap[photoId]
 		if valueExists == false {
 			logMessage(fmt.Sprintf("Photo Id  `%v' (%v) needs to be downloaded.", photoId, photo.Title), true)
 		}
 	}
 
 	// Find photos that exist on disk, but not in Flickr, they need to be deleted.
-	for photoId, pm := range metadataMap {
+	for photoId, pm := range photoIdMap {
 
 		value, _ := photos[photoId]
 		if &value == nil {
 			logMessage(fmt.Sprintf("Photo id `%v' (%v) will be deleted.", photoId, pm.Title), true) 
+		}
+	}
+
+	// Find photos on disk that are not in the metadata
+	for _, fi := range existingFiles {
+		if fi.Name() == setMetadataFileName {
+			continue
+		}
+		_, valueExists := fileNameMap[fi.Name()]
+		if valueExists == false {
+			logMessage(fmt.Sprintf("File exists on disk, but not in metadata: `%v'", fi.Name()), true)
 		}
 	}
 
