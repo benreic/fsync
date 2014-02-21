@@ -16,6 +16,7 @@ import (
 var appFlickrOAuth = new(FlickrOAuth)
 var rootDirectory = flag.String("dir", "", "The base directory where your sets/photos will be downloaded.")
 var forceProcessing = flag.Bool("force", false, "Force processing of each set; don't skip sets even if file counts match")
+var auditOnly = flag.Bool("audit", false, "Compares existing media with the media on Flickr and displays the differences")
 var Flogger *log.Logger
 
 func main() {
@@ -61,16 +62,7 @@ func main() {
 		// Get all the photos for this set and loop over them
 		photos := getPhotosForSet(appFlickrOAuth, v)
 
-		if *forceProcessing != true {
-			// Skip sets that already have all their files downloaded
-			existingFiles, _ := ioutil.ReadDir(dir)
-			if len(existingFiles) == len(photos) + 1 {
-				logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
-				continue
-			}
-		}
-
-		logMessage(fmt.Sprintf("Processing set: `%v'", v.Title), false)
+		existingFiles, _ := ioutil.ReadDir(dir)
 
 		metadataFile := filepath.Join(dir, "metadata.json")
 		var metadata Metadata
@@ -83,6 +75,22 @@ func main() {
 		} else {
 			metadata = Metadata{Photos: []PhotoMetadata{}, SetId: v.Id}
 		}
+
+		if *auditOnly == true {
+
+			auditSet(existingFiles, metadata, photos, v)
+			continue
+		}
+
+		if *forceProcessing != true {
+			// Skip sets that already have all their files downloaded
+			if len(existingFiles) == len(photos) + 1 {
+				logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
+				continue
+			}
+		}
+
+		logMessage(fmt.Sprintf("Processing set: `%v'", v.Title), false)
 
 
 		var fullPath string
@@ -148,6 +156,45 @@ func main() {
 
 		}
 	}
+}
+
+
+/*
+Loop through the photos in the set. See if each media exists in the metadata. Keep track of photos
+that don't exist in the metadata, these need to be downloaded. 
+
+Loop through the media in the metadata. Any that don't exist in the set should be deleted and removed from the metadata.
+
+*/
+func auditSet(existingFiles []os.FileInfo, metadata Metadata, photos map[string]Photo, set Photoset) {
+
+	logMessage(fmt.Sprintf("Auditing set: `%v'", set.Title), true)
+
+	// Convert the metadata into a map for ease of use
+	metadataMap := map[string]PhotoMetadata{}
+
+	for _, pm := range metadata.Photos {
+		metadataMap[pm.PhotoId] = pm
+	}
+
+	// Find photos that don't exist on disk and need to be downloaded
+	for photoId, photo := range photos {
+
+		_, valueExists := metadataMap[photoId]
+		if valueExists == false {
+			logMessage(fmt.Sprintf("Photo Id  `%v' (%v) needs to be downloaded.", photoId, photo.Title), true)
+		}
+	}
+
+	// Find photos that exist on disk, but not in Flickr, they need to be deleted.
+	for photoId, pm := range metadataMap {
+
+		value, _ := photos[photoId]
+		if &value == nil {
+			logMessage(fmt.Sprintf("Photo id `%v' (%v) will be deleted.", photoId, pm.Title), true) 
+		}
+	}
+
 }
 
 
