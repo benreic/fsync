@@ -80,7 +80,7 @@ func main() {
 
 		if *auditOnly == true {
 
-			auditSet(existingFiles, &metadata, photos, v, metadataFile)
+			auditSet(existingFiles, &metadata, photos, v, metadataFile, dir)
 			continue
 		}
 
@@ -169,7 +169,7 @@ Loop through the media in the metadata. Any that don't exist in the set should b
 Loop through the file and make sure they are all in the metadata.
 
 */
-func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string]Photo, set Photoset, metadataFile string) {
+func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string]Photo, set Photoset, metadataFile string, setDir string) {
 
 	logMessage(fmt.Sprintf("Auditing set: `%v'", set.Title), true)
 
@@ -216,7 +216,8 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 					continue
 				}
 			}
-			logMessage(fmt.Sprintf("File exists on disk, but not in metadata: `%v'", fi.Name()), true)
+			logMessage(fmt.Sprintf("File exists on disk, but not in metadata: `%v'. Deleting file.", fi.Name()), true)
+			os.Remove(filepath.Join(setDir, fi.Name()))
 		}
 	}
 }
