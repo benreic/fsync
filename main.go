@@ -207,17 +207,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 		}
 		_, valueExists := fileNameMap[fi.Name()]
 		if valueExists == false {
-			if strings.HasSuffix(fi.Name(), ".mov") {
-				id := strings.TrimRight(fi.Name(), ".mov")
-				value, _ := photos[id]
-				if &value != nil {
-					saveMetadataToFile(value, fi.Name(), metadata, metadataFile)
-					logMessage(fmt.Sprintf("Found orphaned video file, added it to metadata."), true)
-					continue
-				}
-			}
-			logMessage(fmt.Sprintf("File exists on disk, but not in metadata: `%v'. Deleting file.", fi.Name()), true)
-			os.Remove(filepath.Join(setDir, fi.Name()))
+			logMessage(fmt.Sprintf("File exists on disk, but not in metadata. This is a bug.: `%v'.", fi.Name()), true)
 		}
 	}
 }
