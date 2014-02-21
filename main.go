@@ -80,7 +80,7 @@ func main() {
 
 		if *auditOnly == true {
 
-			auditSet(existingFiles, metadata, photos, v)
+			auditSet(existingFiles, &metadata, photos, v, metadataFile)
 			continue
 		}
 
@@ -151,8 +151,7 @@ func main() {
 			saveUrlToFile(appFlickrOAuth, sourceUrl, fullPath)
 
 			// Add the photos metadata to the list and write the metadata file out
-			saveMediaMetadata(vv, fileName, metadata, metadataFile)
-
+			saveMetadataToFile(vv, fileName, &metadata, metadataFile) 
 			logMessage(fmt.Sprintf("Saved %v `%v' to %v.", mediaType, vv.Title, fullPath), false)
 
 
@@ -170,7 +169,7 @@ Loop through the media in the metadata. Any that don't exist in the set should b
 Loop through the file and make sure they are all in the metadata.
 
 */
-func auditSet(existingFiles []os.FileInfo, metadata Metadata, photos map[string]Photo, set Photoset) {
+func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string]Photo, set Photoset, metadataFile string) {
 
 	logMessage(fmt.Sprintf("Auditing set: `%v'", set.Title), true)
 
@@ -208,14 +207,22 @@ func auditSet(existingFiles []os.FileInfo, metadata Metadata, photos map[string]
 		}
 		_, valueExists := fileNameMap[fi.Name()]
 		if valueExists == false {
+			if strings.HasSuffix(fi.Name(), ".mov") {
+				id := strings.TrimRight(fi.Name(), ".mov")
+				value, _ := photos[id]
+				if &value != nil {
+					saveMetadataToFile(value, fi.Name(), metadata, metadataFile)
+					logMessage(fmt.Sprintf("Found orphaned video file, added it to metadata."), true)
+					continue
+				}
+			}
 			logMessage(fmt.Sprintf("File exists on disk, but not in metadata: `%v'", fi.Name()), true)
 		}
 	}
-
 }
 
 
-func saveMediaMetadata(media Photo, fileName string, metadata Metadata, metadataFile string) {
+func saveMetadataToFile(media Photo, fileName string, metadata *Metadata, metadataFile string) {
 
 	p := PhotoMetadata{PhotoId: media.Id, Title: media.Title, Filename: fileName}
 	slice := append(metadata.Photos, p)
@@ -223,6 +230,7 @@ func saveMediaMetadata(media Photo, fileName string, metadata Metadata, metadata
 	metadataBytes, _ := json.Marshal(metadata)
 	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 }
+
 
 
 func fileExists(fullPath string) bool {
