@@ -86,14 +86,13 @@ func main() {
 
 		if *forceProcessing != true {
 			// Skip sets that already have all their files downloaded
-			if len(existingFiles) == len(photos) + 1 {
+			if len(existingFiles) == len(photos)+1 {
 				logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
 				continue
 			}
 		}
 
 		logMessage(fmt.Sprintf("Processing set: `%v'", v.Title), false)
-
 
 		var fullPath string
 		var fileName string
@@ -124,20 +123,19 @@ func main() {
 				fileName = vv.Id + ".mov"
 				sourceUrl = videoUrl
 				mediaType = "video"
-				
+
 			} else if photoUrl != "" {
 
 				// Create the file name from the url
 				fileName = getFileNameFromUrl(photoUrl)
 				sourceUrl = photoUrl
 				mediaType = "photo"
-				
+
 			} else {
 
 				logMessage(fmt.Sprintf("Could not get original size for media: `%v' (%v). Skipping media for now.", vv.Title, vv.Id), false)
 				continue
 			}
-
 
 			fullPath = filepath.Join(dir, fileName)
 
@@ -151,18 +149,16 @@ func main() {
 			saveUrlToFile(appFlickrOAuth, sourceUrl, fullPath)
 
 			// Add the photos metadata to the list and write the metadata file out
-			saveMetadataToFile(vv, fileName, &metadata, metadataFile) 
+			saveMetadataToFile(vv, fileName, &metadata, metadataFile)
 			logMessage(fmt.Sprintf("Saved %v `%v' to %v.", mediaType, vv.Title, fullPath), false)
-
 
 		}
 	}
 }
 
-
 /*
 Loop through the photos in the set. See if each media exists in the metadata. Keep track of photos
-that don't exist in the metadata, these need to be downloaded. 
+that don't exist in the metadata, these need to be downloaded.
 
 Loop through the media in the metadata. Any that don't exist in the set should be deleted and removed from the metadata.
 
@@ -196,7 +192,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 
 		value, _ := photos[photoId]
 		if &value == nil {
-			logMessage(fmt.Sprintf("Photo id `%v' (%v) will be deleted.", photoId, pm.Title), true) 
+			logMessage(fmt.Sprintf("Photo id `%v' (%v) will be deleted.", photoId, pm.Title), true)
 		}
 	}
 
@@ -212,7 +208,6 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 	}
 }
 
-
 func saveMetadataToFile(media Photo, fileName string, metadata *Metadata, metadataFile string) {
 
 	p := PhotoMetadata{PhotoId: media.Id, Title: media.Title, Filename: fileName}
@@ -221,8 +216,6 @@ func saveMetadataToFile(media Photo, fileName string, metadata *Metadata, metada
 	metadataBytes, _ := json.Marshal(metadata)
 	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 }
-
-
 
 func fileExists(fullPath string) bool {
 
@@ -233,7 +226,6 @@ func fileExists(fullPath string) bool {
 	return false
 
 }
-
 
 func saveUrlToFile(flickrOauth FlickrOAuth, url string, fullPath string) {
 
@@ -247,7 +239,6 @@ func saveUrlToFile(flickrOauth FlickrOAuth, url string, fullPath string) {
 
 	err = ioutil.WriteFile(fullPath, body, 0644)
 }
-
 
 func cleanTitle(title string) string {
 

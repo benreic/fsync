@@ -11,13 +11,13 @@ var apiBaseUrl = "http://api.flickr.com/services/rest"
 
 type FlickrErrorResponse struct {
 	XMLName xml.Name `xml:"rsp"`
-	Error FlickrError
+	Error   FlickrError
 }
 
 type FlickrError struct {
 	XMLName xml.Name `xml:"err"`
-	Code string `xml:"code,attr"`
-	Message string `xml:"msg,attr"`
+	Code    string   `xml:"code,attr"`
+	Message string   `xml:"msg,attr"`
 }
 
 type PhotosetsResponse struct {
@@ -185,7 +185,7 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
 		if v.Label == "Original" {
 			photoUrl = v.Url
 		}
-		
+
 		if v.Label == "Video Original" {
 			videoUrl = v.Url
 		}
@@ -193,8 +193,6 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
 
 	return photoUrl, videoUrl
 }
-
-
 
 func generateGetSetsUrl(flickrOauth FlickrOAuth) string {
 
