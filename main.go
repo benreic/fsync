@@ -15,6 +15,7 @@ import (
 
 var appFlickrOAuth = new(FlickrOAuth)
 var rootDirectory = flag.String("dir", "", "The base directory where your sets/photos will be downloaded.")
+var setId = flag.String("setId", "", "Only process a single set; applies to audit and actual processing")
 var forceProcessing = flag.Bool("force", false, "Force processing of each set; don't skip sets even if file counts match")
 var auditOnly = flag.Bool("audit", false, "Compares existing media with the media on Flickr and displays the differences")
 var Flogger *log.Logger
@@ -48,6 +49,10 @@ func main() {
 	sets := getSets(appFlickrOAuth)
 
 	for _, v := range sets.SetContainer.Sets {
+
+		if *setId != "" && v.Id != *setId {
+			continue
+		}
 
 		// Create the directory for this set with the set's created
 		// date as the prefix so the directories are ordered the same way
