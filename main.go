@@ -211,6 +211,19 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 			logMessage(fmt.Sprintf("File exists on disk, but not in metadata. This is a bug.: `%v'.", fi.Name()), true)
 		}
 	}
+
+	// Find photos in metadata that are not on disk
+	for fileName, _ := range fileNameMap {
+		if fileName == setMetadataFileName {
+			continue
+		}
+
+		// make the full file path from the filename
+		fullFileName := filepath.Join(setDir, fileName)
+		if ! fileExists(fullFileName) {
+			logMessage(fmt.Sprintf("File exists in metadata, but not on disk. The file was either deleted or never saved correctly. This is a bug.: `%v'.", fullFileName), true)
+		}
+	}
 }
 
 func saveMetadataToFile(media Photo, fileName string, metadata *Metadata, metadataFile string) {
