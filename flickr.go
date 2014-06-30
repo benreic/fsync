@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-var apiBaseUrl = "http://api.flickr.com/services/rest"
+var apiBaseUrl = "https://api.flickr.com/services/rest"
 
 type FlickrErrorResponse struct {
 	XMLName xml.Name `xml:"rsp"`

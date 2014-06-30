@@ -47,8 +47,6 @@ func main() {
 	// Get the sets, ordered by created date
 	sets := getSets(appFlickrOAuth)
 
-	logMessage(fmt.Sprintf("Got %v sets", len(sets.SetContainer.Sets)), false)
-
 	for _, v := range sets.SetContainer.Sets {
 
 		// Create the directory for this set with the set's created
