@@ -91,12 +91,12 @@ func main() {
 
 		if *forceProcessing != true {
 			// Skip sets that already have all their files downloaded
-			if len(existingFiles) == len(photos)+1 {
+			if len(existingFiles) == (len(photos)+1) && len(existingFiles) == len(metadata.Photos) {
 				logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
 				continue
 			}
 			
-			logMessage(fmt.Sprintf("Processing set: `%v'. Found %v existing files, expected %v files.", v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(photos)+1)), false)
+			logMessage(fmt.Sprintf("Processing set: `%v'. Found %v existing files on disk, %v files in metadata, and %v files on Flickr.", v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(metadata.Photos)), strconv.Itoa(len(photos)+1)), false)
 		} else {
 			logMessage(fmt.Sprintf("Force processing set: `%v'", v.Title), false)
 		}
@@ -202,7 +202,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 	for photoId, pm := range photoIdMap {
 
 		if _, ok := photos[photoId]; ! ok {
-			logMessage(fmt.Sprintf("Photo id `%v' (%v) will be deleted.", photoId, pm.Title), true)
+			logMessage(fmt.Sprintf("Photo id `%v' (%v) needs to be deleted.", photoId, pm.Title), true)
 		}
 	}
 
