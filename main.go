@@ -91,7 +91,7 @@ func main() {
 
 		if *forceProcessing != true {
 			// Skip sets that already have all their files downloaded
-			if len(existingFiles) == (len(photos)+1) && len(existingFiles) == len(metadata.Photos) {
+			if len(existingFiles) == (len(photos)+1) && len(photos) == len(metadata.Photos) {
 				logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
 				continue
 			}
