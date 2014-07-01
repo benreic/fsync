@@ -95,6 +95,8 @@ func main() {
 				logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
 				continue
 			}
+			
+			logMessage(fmt.Sprintf("Processing set: `%v'. Found %v existing files, expected %v files.", v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(photos)+1)), false)
 		}
 
 		logMessage(fmt.Sprintf("Processing set: `%v'", v.Title), false)
