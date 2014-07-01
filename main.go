@@ -123,6 +123,10 @@ func main() {
 						os.Remove(fullPath)
 						logMessage(fmt.Sprintf("Deleted the video's photo located at: %v.", fullPath), false)
 					}
+
+					// Regardless of whether the file exists on disk, make 
+					// sure its gone from the metadata
+					removeFileFromMetadata(vv, fileName, &metadata, metadataFile)
 				}
 
 				fileName = vv.Id + ".mov"
@@ -229,8 +233,43 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 func saveMetadataToFile(media Photo, fileName string, metadata *Metadata, metadataFile string) {
 
 	p := PhotoMetadata{PhotoId: media.Id, Title: media.Title, Filename: fileName}
-	slice := append(metadata.Photos, p)
-	metadata.Photos = slice
+
+	// See if there is an existing entry for this photo
+	// update the metadata if there is
+	var foundPhoto = false
+	for index, photo := range metadata.Photos {
+		if photo.PhotoId == p.PhotoId {
+			metadata.Photos[index].Title = p.Title
+			metadata.Photos[index].Filename = p.Filename
+			foundPhoto = true
+			logMessage("Updating existing entry in metadata.", false)
+			break
+		}
+	}
+
+	// Didn't find an existing one, so add to the metadata
+	if ! foundPhoto {
+		slice := append(metadata.Photos, p)
+		metadata.Photos = slice
+	}
+
+	// serialize it and save
+	metadataBytes, _ := json.Marshal(metadata)
+	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
+}
+
+func removeFileFromMetadata(media Photo, fileName string, metadata *Metadata, metadataFile string) {
+
+	var newListOfMedia = []PhotoMetadata{ }
+	for _, photo := range metadata.Photos { 
+		if photo.Filename != fileName {
+			newListOfMedia = append(newListOfMedia, photo)
+		} else {
+			logMessage(fmt.Sprintf("Removing filename `%v' from the metadata.", fileName), true)
+		}
+	}
+
+	metadata.Photos = newListOfMedia
 	metadataBytes, _ := json.Marshal(metadata)
 	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 }
@@ -284,12 +323,9 @@ func getFileNameFromUrl(url string) string {
 func createLogger() *log.Logger {
 
 	t := time.Now()
-	format := "20060102"
+	format := "20060102-150405"
 
-	filePart := t.Format(format) + "-"
-	filePart += strconv.Itoa(t.Hour())
-	filePart += strconv.Itoa(t.Minute())
-	filePart += strconv.Itoa(t.Second())
+	filePart := t.Format(format)
 
 	logDir := filepath.Join(*rootDirectory, "logs")
 	err := os.MkdirAll(logDir, 0755)
