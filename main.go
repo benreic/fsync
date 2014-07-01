@@ -96,7 +96,7 @@ func main() {
 				continue
 			}
 			
-			logMessage(fmt.Sprintf("Processing set: `%v'. Found %v existing files on disk, %v files in metadata, and %v files on Flickr.", v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(metadata.Photos)), strconv.Itoa(len(photos)), false)
+			logMessage(fmt.Sprintf("Processing set: `%v'. Found %v existing files on disk, %v files in metadata, and %v files on Flickr.", v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(metadata.Photos)), strconv.Itoa(len(photos))), false)
 		} else {
 			logMessage(fmt.Sprintf("Force processing set: `%v'", v.Title), false)
 		}
