@@ -97,9 +97,9 @@ func main() {
 			}
 			
 			logMessage(fmt.Sprintf("Processing set: `%v'. Found %v existing files, expected %v files.", v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(photos)+1)), false)
+		} else {
+			logMessage(fmt.Sprintf("Force processing set: `%v'", v.Title), false)
 		}
-
-		logMessage(fmt.Sprintf("Processing set: `%v'", v.Title), false)
 
 		var fullPath string
 		var fileName string
@@ -201,8 +201,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 	// Find photos that exist on disk, but not in Flickr, they need to be deleted.
 	for photoId, pm := range photoIdMap {
 
-		value, _ := photos[photoId]
-		if &value == nil {
+		if _, ok := photos[photoId]; ! ok {
 			logMessage(fmt.Sprintf("Photo id `%v' (%v) will be deleted.", photoId, pm.Title), true)
 		}
 	}
