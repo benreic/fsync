@@ -72,7 +72,7 @@ func main() {
 		existingFiles, _ := ioutil.ReadDir(dir)
 
 		metadataFile := filepath.Join(dir, setMetadataFileName)
-		var metadata Metadata
+		var metadata SetMetadata
 
 		// Read the existing metadata, or create a new struct if none is found,
 		// so we can pick up where we left off
@@ -80,7 +80,7 @@ func main() {
 			existingMetadata, _ := ioutil.ReadFile(metadataFile)
 			err = json.Unmarshal(existingMetadata, &metadata)
 		} else {
-			metadata = Metadata{Photos: []PhotoMetadata{}, SetId: v.Id}
+			metadata = SetMetadata{Photos: []MediaMetadata{}, SetId: v.Id}
 		}
 
 		if *auditOnly == true {
@@ -110,6 +110,10 @@ func main() {
 			// Get the photo and video url (if one exists)
 			photoUrl, videoUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
 
+
+			// @todo: This section can be removed once I'm sure all the
+			// erroneous files have been removed from disk and metadata. 
+			// Pretty sure they have at this point.....
 			if videoUrl != "" {
 
 				// If we erroneously downloaded a video as a photo
@@ -153,6 +157,7 @@ func main() {
 			// Skip files that exist
 			if fileExists(fullPath) {
 				logMessage(fmt.Sprintf("Media existed at %v. Skipping.", fullPath), false)
+				saveMetadataToFile(vv, fileName, &metadata, metadataFile)
 				continue
 			}
 
@@ -176,13 +181,13 @@ Loop through the media in the metadata. Any that don't exist in the set should b
 Loop through the file and make sure they are all in the metadata.
 
 */
-func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string]Photo, set Photoset, metadataFile string, setDir string) {
+func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[string]Photo, set Photoset, metadataFile string, setDir string) {
 
 	logMessage(fmt.Sprintf("Auditing set: `%v'", set.Title), true)
 
 	// Convert the metadata into a map for ease of use
-	photoIdMap := map[string]PhotoMetadata{}
-	fileNameMap := map[string]PhotoMetadata{}
+	photoIdMap := map[string]MediaMetadata{}
+	fileNameMap := map[string]MediaMetadata{}
 
 	for _, pm := range metadata.Photos {
 		photoIdMap[pm.PhotoId] = pm
@@ -190,11 +195,11 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 	}
 
 	// Find photos that don't exist on disk and need to be downloaded
-	for photoId, photo := range photos {
+	for mediaId, photo := range photos {
 
-		_, valueExists := photoIdMap[photoId]
+		_, valueExists := photoIdMap[mediaId]
 		if valueExists == false {
-			logMessage(fmt.Sprintf("Photo Id  `%v' (%v) needs to be downloaded.", photoId, photo.Title), true)
+			logMessage(fmt.Sprintf("Photo Id  `%v' (%v) needs to be downloaded.", mediaId, photo.Title), true)
 		}
 	}
 
@@ -231,9 +236,9 @@ func auditSet(existingFiles []os.FileInfo, metadata *Metadata, photos map[string
 	}
 }
 
-func saveMetadataToFile(media Photo, fileName string, metadata *Metadata, metadataFile string) {
+func saveMetadataToFile(media Photo, fileName string, metadata *SetMetadata, metadataFile string) {
 
-	p := PhotoMetadata{PhotoId: media.Id, Title: media.Title, Filename: fileName}
+	p := MediaMetadata{PhotoId: media.Id, Title: media.Title, Filename: fileName}
 
 	// See if there is an existing entry for this photo
 	// update the metadata if there is
@@ -259,9 +264,9 @@ func saveMetadataToFile(media Photo, fileName string, metadata *Metadata, metada
 	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 }
 
-func removeFileFromMetadata(media Photo, fileName string, metadata *Metadata, metadataFile string) {
+func removeFileFromMetadata(media Photo, fileName string, metadata *SetMetadata, metadataFile string) {
 
-	var newListOfMedia = []PhotoMetadata{ }
+	var newListOfMedia = []MediaMetadata{ }
 	for _, photo := range metadata.Photos { 
 		if photo.Filename != fileName {
 			newListOfMedia = append(newListOfMedia, photo)
@@ -324,7 +329,7 @@ func getFileNameFromUrl(url string) string {
 func createLogger() *log.Logger {
 
 	t := time.Now()
-	format := "20060102-150405"
+	format := "20060102"
 
 	filePart := t.Format(format)
 
@@ -335,8 +340,13 @@ func createLogger() *log.Logger {
 	}
 
 	filePath := filepath.Join(logDir, "fsync-"+filePart+".log")
+	var fi *os.File
+	if ! fileExists(filePath) {
+		fi, _ = os.Create(filePath)
+	} else {
+		fi, _ = os.OpenFile(filePath, os.O_RDWR|os.O_APPEND, 0755);
+	}
 
-	fi, _ := os.Create(filePath)
 	l := log.New(fi, "", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 	return l
 }
@@ -350,14 +360,4 @@ func logMessage(message string, echo bool) {
 	}
 }
 
-type Metadata struct {
-	SetId  string
-	Photos []PhotoMetadata
-}
 
-// Photo metadata struct
-type PhotoMetadata struct {
-	PhotoId  string
-	Title    string
-	Filename string
-}
