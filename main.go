@@ -167,6 +167,24 @@ func main() {
 			// Add the photos metadata to the list and write the metadata file out
 			saveMetadataToFile(vv, fileName, &metadata, metadataFile)
 			logMessage(fmt.Sprintf("Saved %v `%v' to %v.", mediaType, vv.Title, fullPath), false)
+		}
+
+		// Look through all the files in the metadata and find the ones that no longer exist in 
+		// Flickr. Note them and then loop over those to delete them from the filesystem and 
+		// remove them from the metadata
+		filesToRemove := map[string]string{}
+		for _, pm := range metadata.Photos {
+			if _, ok := photos[pm.PhotoId]; ! ok {
+				fullPath = filepath.Join(dir, pm.Filename)
+				filesToRemove[fullPath] = pm.PhotoId
+			}
+		}
+
+		for photoFilePath, mediaId := range filesToRemove {
+
+			logMessage(fmt.Sprintf("Deleting media Id `%v' at `%v'", mediaId, photoFilePath), true)
+			os.Remove(photoFilePath)
+			metadata.RemoveItemById(mediaId, metadataFile)
 
 		}
 	}
@@ -199,7 +217,19 @@ func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[str
 
 		_, valueExists := photoIdMap[mediaId]
 		if valueExists == false {
-			logMessage(fmt.Sprintf("Media Id `%v' (%v) does not exist in the metadata. It either needs to be downloaded or added to the metadata if it already exists on disk.", mediaId, photo.Title), true)
+
+			doLog := true
+			for _, fi := range existingFiles {
+				if strings.Index(fi.Name(), mediaId) == 0 {
+					logMessage(fmt.Sprintf("Media Id `%v' (%v) does not exist in the metadata, but the media appears to exist on disk with file name `%v'. It needs to be added to the metadata.", mediaId, photo.Title, fi.Name()), true)
+					doLog = false	
+					break
+				}
+			}
+
+			if doLog {
+				logMessage(fmt.Sprintf("Media Id `%v' (%v) does not exist in the metadata. It needs to be downloaded and added to the metadata.", mediaId, photo.Title), true)
+			}
 		}
 	}
 
@@ -266,18 +296,7 @@ func saveMetadataToFile(media Photo, fileName string, metadata *SetMetadata, met
 
 func removeFileFromMetadata(media Photo, fileName string, metadata *SetMetadata, metadataFile string) {
 
-	var newListOfMedia = []MediaMetadata{ }
-	for _, photo := range metadata.Photos { 
-		if photo.Filename != fileName {
-			newListOfMedia = append(newListOfMedia, photo)
-		} else {
-			logMessage(fmt.Sprintf("Removing filename `%v' from the metadata.", fileName), true)
-		}
-	}
-
-	metadata.Photos = newListOfMedia
-	metadataBytes, _ := json.Marshal(metadata)
-	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
+	metadata.RemoveItemByFilename(fileName, metadataFile)
 }
 
 func fileExists(fullPath string) bool {
