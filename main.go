@@ -248,7 +248,7 @@ func findDupes() {
 			continue
 		}
 
-		totalDupes++
+		totalDupes += len(paths)-1
 		logMessage(fmt.Sprintf("File `%v' was found %v times.", fileName, len(paths)), true)
 		for _, path := range paths {
 			logMessage(path, true)
