@@ -175,7 +175,8 @@ func main() {
 
 func countFiles() {
 
-	var mediaCount = 0
+	var photoCount = 0
+	var movieCount = 0
 	visitor := func (path string, f os.FileInfo, err error) error {
 
 		if ! f.IsDir() {
@@ -184,19 +185,19 @@ func countFiles() {
 
 		matches, _ := filepath.Glob(filepath.Join(path, "*.jpg"))
 		if matches != nil {
-			mediaCount += len(matches)
+			photoCount += len(matches)
 		}
 
 		matches, _ = filepath.Glob(filepath.Join(path, "*.mov"))
 		if matches != nil {
-			mediaCount += len(matches)
+			movieCount += len(matches)
 		}
 
 		return nil
 	}
 
 	filepath.Walk(*rootDirectory, visitor)
-	logMessage(fmt.Sprintf("Found %v media files.", mediaCount), true)
+	logMessage(fmt.Sprintf("Found %v media files. (%v photos, %v movies)", (photoCount + movieCount), photoCount, movieCount), true)
 }
 
 /*
