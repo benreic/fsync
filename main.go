@@ -18,6 +18,7 @@ var rootDirectory = flag.String("dir", "", "The base directory where your sets/p
 var setId = flag.String("setId", "", "Only process a single set; applies to audit and actual processing")
 var forceProcessing = flag.Bool("force", false, "Force processing of each set; don't skip sets even if file counts match")
 var auditOnly = flag.Bool("audit", false, "Compares existing media with the media on Flickr and displays the differences")
+var countOnly = flag.Bool("count", false, "Recursively counts all media files in the specified directory")
 var Flogger *log.Logger
 
 var setMetadataFileName = "metadata.json"
@@ -30,6 +31,11 @@ func main() {
 
 	if *rootDirectory == "" {
 		fmt.Println("You must specify a root directory using -dir")
+		return
+	}
+
+	if *countOnly == true {
+		countFiles()
 		return
 	}
 
@@ -166,6 +172,33 @@ func main() {
 	}
 }
 
+
+func countFiles() {
+
+	var mediaCount = 0
+	visitor := func (path string, f os.FileInfo, err error) error {
+
+		if ! f.IsDir() {
+			return nil
+		}
+
+		matches, _ := filepath.Glob(filepath.Join(path, "*.jpg"))
+		if matches != nil {
+			mediaCount += len(matches)
+		}
+
+		matches, _ = filepath.Glob(filepath.Join(path, "*.mov"))
+		if matches != nil {
+			mediaCount += len(matches)
+		}
+
+		return nil
+	}
+
+	filepath.Walk(*rootDirectory, visitor)
+	logMessage(fmt.Sprintf("Found %v media files.", mediaCount), true)
+}
+
 /*
 Loop through the photos in the set. See if each media exists in the metadata. Keep track of photos
 that don't exist in the metadata, these need to be downloaded.
@@ -175,6 +208,7 @@ Loop through the media in the metadata. Any that don't exist in the set should b
 Loop through the file and make sure they are all in the metadata.
 
 */
+
 func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[string]Photo, set Photoset, metadataFile string, setDir string) {
 
 	logMessage(fmt.Sprintf("Auditing set: `%v'", set.Title), true)
