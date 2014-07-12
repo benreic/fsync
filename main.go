@@ -241,18 +241,21 @@ func findDupes() {
 
 	filepath.Walk(*rootDirectory, visitor)
 
+	var totalDupes = 0
 	for fileName, paths := range duplicates {
 
 		if len(paths) < 2 {
 			continue
 		}
 
+		totalDupes++
 		logMessage(fmt.Sprintf("File `%v' was found %v times.", fileName, len(paths)), true)
 		for _, path := range paths {
 			logMessage(path, true)
 		}
 	}
 
+	logMessage(fmt.Sprintf("Total dupes: %v", totalDupes), true)
 }
 
 
