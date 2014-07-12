@@ -110,30 +110,7 @@ func main() {
 			// Get the photo and video url (if one exists)
 			photoUrl, videoUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
 
-
-			// @todo: This section can be removed once I'm sure all the
-			// erroneous files have been removed from disk and metadata. 
-			// Pretty sure they have at this point.....
 			if videoUrl != "" {
-
-				// If we erroneously downloaded a video as a photo
-				// before, lets delete it before getting the actual video
-				if photoUrl != "" {
-
-					// Create the photo file name from the url
-					fileName = getFileNameFromUrl(photoUrl)
-					fullPath = filepath.Join(dir, fileName)
-
-					// Remove the photo, if we found one
-					if fileExists(fullPath) {
-						os.Remove(fullPath)
-						logMessage(fmt.Sprintf("Deleted the video's photo located at: %v.", fullPath), false)
-					}
-
-					// Regardless of whether the file exists on disk, make 
-					// sure its gone from the metadata
-					removeFileFromMetadata(vv, fileName, &metadata, metadataFile)
-				}
 
 				fileName = vv.Id + ".mov"
 				sourceUrl = videoUrl
@@ -141,7 +118,6 @@ func main() {
 
 			} else if photoUrl != "" {
 
-				// Create the file name from the url
 				fileName = getFileNameFromUrl(photoUrl)
 				sourceUrl = photoUrl
 				mediaType = "photo"
