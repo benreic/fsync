@@ -19,6 +19,7 @@ var setId = flag.String("setId", "", "Only process a single set; applies to audi
 var forceProcessing = flag.Bool("force", false, "Force processing of each set; don't skip sets even if file counts match")
 var auditOnly = flag.Bool("audit", false, "Compares existing media with the media on Flickr and displays the differences")
 var countOnly = flag.Bool("count", false, "Recursively counts all media files in the specified directory")
+var findDuplicates = flag.Bool("dupes", false, "Find and print media files that exist in multiple sets.")
 var Flogger *log.Logger
 
 var setMetadataFileName = "metadata.json"
@@ -36,6 +37,11 @@ func main() {
 
 	if *countOnly == true {
 		countFiles()
+		return
+	}
+
+	if *findDuplicates == true {
+		findDupes()
 		return
 	}
 
@@ -173,6 +179,13 @@ func main() {
 }
 
 
+/**
+ *
+ * Counts the number of media files and prints the total as well
+ * as the subtotal of photos and movies.
+ *
+ **/
+
 func countFiles() {
 
 	var photoCount = 0
@@ -200,15 +213,57 @@ func countFiles() {
 	logMessage(fmt.Sprintf("Found %v media files. (%v photos, %v movies)", (photoCount + movieCount), photoCount, movieCount), true)
 }
 
-/*
-Loop through the photos in the set. See if each media exists in the metadata. Keep track of photos
-that don't exist in the metadata, these need to be downloaded.
 
-Loop through the media in the metadata. Any that don't exist in the set should be deleted and removed from the metadata.
+/**
+ *
+ * Finds duplicate filenames and prints them to the console. 
+ * This identifies media that exist in more than one set.
+ *
+ **/
 
-Loop through the file and make sure they are all in the metadata.
+func findDupes() {
 
-*/
+	duplicates := map[string][]string{}
+	visitor := func (path string, f os.FileInfo, err error) error {
+
+		if f.IsDir() {
+			return nil
+		}
+
+		if _, ok := duplicates[f.Name()]; ! ok {
+			duplicates[f.Name()] = []string{}
+		}
+
+		duplicates[f.Name()] = append(duplicates[f.Name()], path)
+
+		return nil
+	}
+
+	filepath.Walk(*rootDirectory, visitor)
+
+	for fileName, paths := range duplicates {
+
+		if len(paths) < 2 {
+			continue
+		}
+
+		logMessage(fmt.Sprintf("File `%v' was found %v times.", fileName, len(paths)), true)
+		for _, path := range paths {
+			logMessage(path, true)
+		}
+	}
+
+}
+
+
+/**
+ *
+ * Loop through the photos in the set. See if each media exists in the metadata. Keep track of photos
+ * that don't exist in the metadata, these need to be downloaded.
+ * Loop through the media in the metadata. Any that don't exist in the set should be deleted and removed from the metadata.
+ * Loop through the file and make sure they are all in the metadata.
+ *
+ **/
 
 func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[string]Photo, set Photoset, metadataFile string, setDir string) {
 
