@@ -137,7 +137,7 @@ func main() {
 
 			} else {
 
-				logMessage(fmt.Sprintf("Could not get original size for media: `%v' (%v). Skipping media for now.", vv.Title, vv.Id), false)
+				logMessage(fmt.Sprintf("Could not get original size for media: `%v' (%v). Skipping media for now.", vv.Title, vv.Id), true)
 				continue
 			}
 
