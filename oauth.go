@@ -48,7 +48,9 @@ func loadOAuthSecrets() OAuthSecrets {
 			panic("oauth-secrets.json file was empty.")
 		}
 	} else {
-		panic("oauth-secrets.json didn't exist.")
+		msg := fmt.Sprintf("No oauth secrets file found at:i %v", oauthSecretsFile)
+		logMessage(msg, true)
+		panic(msg)
 	}
 
 	return *s

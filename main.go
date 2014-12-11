@@ -108,7 +108,8 @@ func main() {
 				continue
 			}
 			
-			logMessage(fmt.Sprintf("Processing set: `%v'. Found %v existing files on disk, %v files in metadata, and %v files on Flickr.", v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(metadata.Photos)), strconv.Itoa(len(photos))), false)
+			formatString := "Processing set: `%v'. Found %v existing files on disk, %v files in metadata, and %v files on Flickr."
+			logMessage(fmt.Sprintf(formatString, v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(metadata.Photos)), strconv.Itoa(len(photos))), false)
 		} else {
 			logMessage(fmt.Sprintf("Force processing set: `%v'", v.Title), false)
 		}
@@ -149,7 +150,7 @@ func main() {
 				continue
 			}
 
-			// Save video to disk
+			// Save media to disk
 			saveUrlToFile(appFlickrOAuth, sourceUrl, fullPath)
 
 			// Add the photos metadata to the list and write the metadata file out
@@ -173,7 +174,6 @@ func main() {
 			logMessage(fmt.Sprintf("Deleting media Id `%v' at `%v'", mediaId, photoFilePath), true)
 			os.Remove(photoFilePath)
 			metadata.RemoveItemById(mediaId, metadataFile)
-
 		}
 	}
 }
@@ -338,29 +338,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[str
 func saveMetadataToFile(media Photo, fileName string, metadata *SetMetadata, metadataFile string) {
 
 	p := MediaMetadata{PhotoId: media.Id, Title: media.Title, Filename: fileName}
-
-	// See if there is an existing entry for this photo
-	// update the metadata if there is
-	var foundPhoto = false
-	for index, photo := range metadata.Photos {
-		if photo.PhotoId == p.PhotoId {
-			metadata.Photos[index].Title = p.Title
-			metadata.Photos[index].Filename = p.Filename
-			foundPhoto = true
-			logMessage("Updating existing entry in metadata.", false)
-			break
-		}
-	}
-
-	// Didn't find an existing one, so add to the metadata
-	if ! foundPhoto {
-		slice := append(metadata.Photos, p)
-		metadata.Photos = slice
-	}
-
-	// serialize it and save
-	metadataBytes, _ := json.Marshal(metadata)
-	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
+	metadata.AddOrUpdate(p, metadataFile)
 }
 
 func removeFileFromMetadata(media Photo, fileName string, metadata *SetMetadata, metadataFile string) {
