@@ -173,7 +173,7 @@ func processSet(appFlickrOAuth FlickrOAuth, v Photoset) {
 		} else {
 
 			logMessage(fmt.Sprintf("Could not get original size for media: `%v' (%v). Skipping media for now.", vv.Title, vv.Id), true)
-			return
+			continue
 		}
 
 		fullPath = filepath.Join(dir, fileName)
@@ -182,7 +182,7 @@ func processSet(appFlickrOAuth FlickrOAuth, v Photoset) {
 		if fileExists(fullPath) {
 			logMessage(fmt.Sprintf("Media existed at %v. Skipping.", fullPath), false)
 			saveMetadataToFile(vv, fileName, &metadata, metadataFile)
-			return
+			continue
 		}
 
 		// Save media to disk
