@@ -223,6 +223,12 @@ func processSet(appFlickrOAuth FlickrOAuth, v Photoset) {
 
 func countFiles() {
 
+	photoCount, movieCount := countMediaFiles()
+	logMessage(fmt.Sprintf("Found %v media files, including duplicates (photos can be part of more than one album). (%v photos, %v movies)", (photoCount + movieCount), photoCount, movieCount), true)
+}
+
+func countMediaFiles() (int,int) { 
+
 	var photoCount = 0
 	var movieCount = 0
 	visitor := func (path string, f os.FileInfo, err error) error {
@@ -245,7 +251,7 @@ func countFiles() {
 	}
 
 	filepath.Walk(*rootDirectory, visitor)
-	logMessage(fmt.Sprintf("Found %v media files. (%v photos, %v movies)", (photoCount + movieCount), photoCount, movieCount), true)
+	return photoCount, movieCount
 }
 
 
@@ -262,6 +268,10 @@ func findDupes() {
 	visitor := func (path string, f os.FileInfo, err error) error {
 
 		if f.IsDir() {
+			return nil
+		}
+
+		if f.Name() == "metadata.json" {
 			return nil
 		}
 
@@ -284,13 +294,16 @@ func findDupes() {
 		}
 
 		totalDupes += len(paths)-1
-		logMessage(fmt.Sprintf("File `%v' was found %v times.", fileName, len(paths)), true)
+		logMessage(fmt.Sprintf("File `%v' was found %v times.", fileName, len(paths)), false)
 		for _, path := range paths {
 			logMessage(path, true)
 		}
 	}
 
-	logMessage(fmt.Sprintf("Total dupes: %v", totalDupes), true)
+	photoCount, movieCount := countMediaFiles()
+	realMediaCount := (photoCount + movieCount) - totalDupes;
+
+	logMessage(fmt.Sprintf("Total dupes: %v. Real count of media files: %v", totalDupes, realMediaCount), true)
 }
 
 
