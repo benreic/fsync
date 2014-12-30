@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 	"sort"
+	"runtime"
 )
 
 var oauth_request_token_url = "https://www.flickr.com/services/oauth/request_token"
