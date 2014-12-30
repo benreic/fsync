@@ -123,7 +123,7 @@ func doOAuthSetup() FlickrOAuth {
 	case "darwin":
 		exec.Command("open", url).Start()
 	case "windows":
-		exec.Command("start", url).Start()
+		exec.Command(`C:\Windows\System32\rundll32.exe`, "url.dll,FileProtocolHandler", url).Start()
 	}
 
 	// Have them enter the 9 digit code from flickr
