@@ -150,7 +150,6 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 		
 		requestUrl := generateOAuthUrl(apiBaseUrl, apiName, flickrOAuth, extras)
 
-		logMessage("Getting page #" + strconv.Itoa(currentPage), false)
 		body, err = makeGetRequest(requestUrl)
 		if err != nil {
 			panic(err)
