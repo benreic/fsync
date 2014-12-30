@@ -115,7 +115,15 @@ func doOAuthSetup() FlickrOAuth {
 	}
 
 	// Send the user to flickr to authorize us
-	exec.Command("open", "https://www.flickr.com/services/oauth/authorize?perms=read&oauth_token="+oauth_token).Start()
+	url := "https://www.flickr.com/services/oauth/authorize?perms=read&oauth_token="+oauth_token
+	switch runtime.GOOS {
+	case "linux":
+		exec.Command("xdg-open", url).Start()
+	case "darwin":
+		exec.Command("open", url).Start()
+	case "windows":
+		exec.Command("start", url).Start()
+	}
 
 	// Have them enter the 9 digit code from flickr
 	fmt.Println("Authorize the app on flickr's site and enter the nine digit code here and press 'Return':")
