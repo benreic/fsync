@@ -12,10 +12,11 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+	"sort"
 )
 
-var oauth_request_token_url = "http://www.flickr.com/services/oauth/request_token"
-var oauth_exchange_token_url = "http://www.flickr.com/services/oauth/access_token"
+var oauth_request_token_url = "https://www.flickr.com/services/oauth/request_token"
+var oauth_exchange_token_url = "https://www.flickr.com/services/oauth/access_token"
 var oauth_nonce = ""
 var cacheFile = "cache/oauth.json"
 var oauthSecretsFile = "cache/oauth-secrets.json"
@@ -114,7 +115,7 @@ func doOAuthSetup() FlickrOAuth {
 	}
 
 	// Send the user to flickr to authorize us
-	exec.Command("open", "http://www.flickr.com/services/oauth/authorize?perms=read&oauth_token="+oauth_token).Start()
+	exec.Command("open", "https://www.flickr.com/services/oauth/authorize?perms=read&oauth_token="+oauth_token).Start()
 
 	// Have them enter the 9 digit code from flickr
 	fmt.Println("Authorize the app on flickr's site and enter the nine digit code here and press 'Return':")
@@ -164,7 +165,7 @@ func doOAuthSetup() FlickrOAuth {
 }
 
 // Generates an oauth url for flickr based on the method the user wants and any extra params
-func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraParams *map[string]string) string {
+func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraParams map[string]string) string {
 
 	secrets := loadOAuthSecrets()
 
@@ -180,7 +181,7 @@ func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraPara
 
 	if extraParams != nil {
 
-		for key, element := range *extraParams {
+		for key, element := range extraParams {
 			params[key] = element
 		}
 	}
@@ -188,9 +189,17 @@ func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraPara
 	apiSignature := createApiSignature(baseUrl, "GET", params, secrets.Secret, &auth.OAuthTokenSecret)
 	params["oauth_signature"] = apiSignature
 
+	sortedKeys := []string{}
+
+	for key, _ := range params {
+		sortedKeys = append(sortedKeys, key)
+	}
+
+	sort.Strings(sortedKeys)
+
 	requestUrl := baseUrl + "?"
-	for key, element := range params {
-		requestUrl += key + "=" + element + "&"
+	for _, key := range sortedKeys {
+		requestUrl += key + "=" + params[key] + "&"
 	}
 
 	requestUrl = strings.TrimRight(requestUrl, "&")
@@ -263,9 +272,17 @@ func createApiSignature(
 	// Start with the method and url-encoded base url
 	var sigBase = method + "&" + url.QueryEscape(baseUrl) + "&"
 
+	sortedKeys := []string{}
+
+	for key, _ := range params {
+		sortedKeys = append(sortedKeys, key)
+	}
+
+	sort.Strings(sortedKeys)
+
 	// Add the url-encoded params
-	for key, element := range params {
-		sigBase += url.QueryEscape(key + "=" + element + "&")
+	for _, key := range sortedKeys {
+		sigBase += url.QueryEscape(key + "=" + params[key] + "&")
 	}
 
 	// Remove the last url-encoded '&'

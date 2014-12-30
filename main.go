@@ -20,6 +20,7 @@ var forceProcessing = flag.Bool("force", false, "Force processing of each set; d
 var auditOnly = flag.Bool("audit", false, "Compares existing media with the media on Flickr and displays the differences")
 var countOnly = flag.Bool("count", false, "Recursively counts all media files in the specified directory")
 var findDuplicates = flag.Bool("dupes", false, "Find and print media files that exist in multiple sets.")
+var onlyPhotosNotInSet = flag.Bool("onlyNonSet", false, "Skip all sets and only process media that are not in a set")
 var Flogger *log.Logger
 
 var setMetadataFileName = "metadata.json"
@@ -57,125 +58,159 @@ func main() {
 		}
 	}
 
-	// Get the sets, ordered by created date
-	sets := getSets(appFlickrOAuth)
+	if ! *onlyPhotosNotInSet {
 
-	for _, v := range sets.SetContainer.Sets {
+		// Get the sets, ordered by created date
+		sets := getSets(appFlickrOAuth)
 
-		if *setId != "" && v.Id != *setId {
-			continue
+		for _, set := range sets.SetContainer.Sets {
+
+			if *setId != "" && set.Id != *setId {
+				continue
+			}
+
+			processSet(appFlickrOAuth, set)
 		}
+	}
 
-		// Create the directory for this set with the set's created
-		// date as the prefix so the directories are ordered the same way
-		// flickr orders the sets
+
+	if *setId == "" || *onlyPhotosNotInSet  {
+		// Handle photos not in a set if we haven't targeted
+		// a specific set
+		noSet := new(Photoset)
+		noSet.Id = ""
+		noSet.Title = "NO-SET"
+		processSet(appFlickrOAuth, *noSet)
+	}
+}
+
+
+func processSet(appFlickrOAuth FlickrOAuth, v Photoset) {
+
+	// Create the directory for this set with the set's created
+	// date as the prefix so the directories are ordered the same way
+	// flickr orders the sets
+	var dir string
+	if len(v.Id) > 0 {
 		t := time.Unix(int64(v.DateCreated), 0)
 		format := "20060102"
 		cleanTitle := cleanTitle(v.Title)
-		dir := filepath.Join(*rootDirectory, t.Format(format)+" "+cleanTitle)
+		dir = filepath.Join(*rootDirectory, t.Format(format)+" "+cleanTitle)
 		err := os.MkdirAll(dir, 0755)
 		if err != nil {
 			panic(err)
 		}
-
-		// Get all the photos for this set and loop over them
-		photos := getPhotosForSet(appFlickrOAuth, v)
-
-		existingFiles, _ := ioutil.ReadDir(dir)
-
-		metadataFile := filepath.Join(dir, setMetadataFileName)
-		var metadata SetMetadata
-
-		// Read the existing metadata, or create a new struct if none is found,
-		// so we can pick up where we left off
-		if fileExists(metadataFile) {
-			existingMetadata, _ := ioutil.ReadFile(metadataFile)
-			err = json.Unmarshal(existingMetadata, &metadata)
-		} else {
-			metadata = SetMetadata{Photos: []MediaMetadata{}, SetId: v.Id}
-		}
-
-		if *auditOnly == true {
-
-			auditSet(existingFiles, &metadata, photos, v, metadataFile, dir)
-			continue
-		}
-
-		if *forceProcessing != true {
-			// Skip sets that already have all their files downloaded
-			if len(existingFiles) == (len(photos)+1) && len(photos) == len(metadata.Photos) {
-				logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
-				continue
-			}
-			
-			formatString := "Processing set: `%v'. Found %v existing files on disk, %v files in metadata, and %v files on Flickr."
-			logMessage(fmt.Sprintf(formatString, v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(metadata.Photos)), strconv.Itoa(len(photos))), false)
-		} else {
-			logMessage(fmt.Sprintf("Force processing set: `%v'", v.Title), false)
-		}
-
-		var fullPath string
-		var fileName string
-		var sourceUrl string
-		var mediaType string
-		for _, vv := range photos {
-
-			// Get the photo and video url (if one exists)
-			photoUrl, videoUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
-
-			if videoUrl != "" {
-
-				fileName = vv.Id + ".mov"
-				sourceUrl = videoUrl
-				mediaType = "video"
-
-			} else if photoUrl != "" {
-
-				fileName = getFileNameFromUrl(photoUrl)
-				sourceUrl = photoUrl
-				mediaType = "photo"
-
-			} else {
-
-				logMessage(fmt.Sprintf("Could not get original size for media: `%v' (%v). Skipping media for now.", vv.Title, vv.Id), true)
-				continue
-			}
-
-			fullPath = filepath.Join(dir, fileName)
-
-			// Skip files that exist
-			if fileExists(fullPath) {
-				logMessage(fmt.Sprintf("Media existed at %v. Skipping.", fullPath), false)
-				saveMetadataToFile(vv, fileName, &metadata, metadataFile)
-				continue
-			}
-
-			// Save media to disk
-			saveUrlToFile(appFlickrOAuth, sourceUrl, fullPath)
-
-			// Add the photos metadata to the list and write the metadata file out
-			saveMetadataToFile(vv, fileName, &metadata, metadataFile)
-			logMessage(fmt.Sprintf("Saved %v `%v' to %v.", mediaType, vv.Title, fullPath), false)
-		}
-
-		// Look through all the files in the metadata and find the ones that no longer exist in 
-		// Flickr. Note them and then loop over those to delete them from the filesystem and 
-		// remove them from the metadata
-		filesToRemove := map[string]string{}
-		for _, pm := range metadata.Photos {
-			if _, ok := photos[pm.PhotoId]; ! ok {
-				fullPath = filepath.Join(dir, pm.Filename)
-				filesToRemove[fullPath] = pm.PhotoId
-			}
-		}
-
-		for photoFilePath, mediaId := range filesToRemove {
-
-			logMessage(fmt.Sprintf("Deleting media Id `%v' at `%v'", mediaId, photoFilePath), true)
-			os.Remove(photoFilePath)
-			metadata.RemoveItemById(mediaId, metadataFile)
+	} else {
+		dir = filepath.Join(*rootDirectory, "NO-SET")
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			panic(err)
 		}
 	}
+
+	// Get all the photos for this set and loop over them
+	var photos map[string]Photo
+	if len(v.Id) > 0 {
+		photos = getPhotosForSet(appFlickrOAuth, v)
+	} else {
+		photos = getPhotosNotInSet(appFlickrOAuth)
+	}
+
+	existingFiles, _ := ioutil.ReadDir(dir)
+
+	metadataFile := filepath.Join(dir, setMetadataFileName)
+	var metadata SetMetadata
+
+	// Read the existing metadata, or create a new struct if none is found,
+	// so we can pick up where we left off
+	if fileExists(metadataFile) {
+		existingMetadata, _ := ioutil.ReadFile(metadataFile)
+		json.Unmarshal(existingMetadata, &metadata)
+	} else {
+		metadata = SetMetadata{Photos: []MediaMetadata{}, SetId: v.Id}
+	}
+
+	if *auditOnly == true {
+
+		auditSet(existingFiles, &metadata, photos, v, metadataFile, dir)
+		return
+	}
+
+	if *forceProcessing != true {
+		// Skip sets that already have all their files downloaded
+		if len(existingFiles) == (len(photos)+1) && len(photos) == len(metadata.Photos) {
+			logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", v.Title, strconv.Itoa(len(existingFiles))), false)
+			return
+		}
+		
+		formatString := "Processing set: `%v'. Found %v existing files on disk, %v files in metadata, and %v files on Flickr."
+		logMessage(fmt.Sprintf(formatString, v.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(metadata.Photos)), strconv.Itoa(len(photos))), false)
+	} else {
+		logMessage(fmt.Sprintf("Force processing set: `%v'", v.Title), false)
+	}
+
+	var fullPath string
+	var fileName string
+	var sourceUrl string
+	var mediaType string
+	for _, vv := range photos {
+
+		// Get the photo and video url (if one exists)
+		photoUrl, videoUrl := getOriginalSizeUrl(appFlickrOAuth, vv)
+
+		if videoUrl != "" {
+
+			fileName = vv.Id + ".mov"
+			sourceUrl = videoUrl
+			mediaType = "video"
+
+		} else if photoUrl != "" {
+
+			fileName = getFileNameFromUrl(photoUrl)
+			sourceUrl = photoUrl
+			mediaType = "photo"
+
+		} else {
+
+			logMessage(fmt.Sprintf("Could not get original size for media: `%v' (%v). Skipping media for now.", vv.Title, vv.Id), true)
+			return
+		}
+
+		fullPath = filepath.Join(dir, fileName)
+
+		// Skip files that exist
+		if fileExists(fullPath) {
+			logMessage(fmt.Sprintf("Media existed at %v. Skipping.", fullPath), false)
+			saveMetadataToFile(vv, fileName, &metadata, metadataFile)
+			return
+		}
+
+		// Save media to disk
+		saveUrlToFile(appFlickrOAuth, sourceUrl, fullPath)
+
+		// Add the photos metadata to the list and write the metadata file out
+		saveMetadataToFile(vv, fileName, &metadata, metadataFile)
+		logMessage(fmt.Sprintf("Saved %v `%v' to %v.", mediaType, vv.Title, fullPath), false)
+	}
+
+	// Look through all the files in the metadata and find the ones that no longer exist in 
+	// Flickr. Note them and then loop over those to delete them from the filesystem and 
+	// remove them from the metadata
+	filesToRemove := map[string]string{}
+	for _, pm := range metadata.Photos {
+		if _, ok := photos[pm.PhotoId]; ! ok {
+			fullPath = filepath.Join(dir, pm.Filename)
+			filesToRemove[fullPath] = pm.PhotoId
+		}
+	}
+
+	for photoFilePath, mediaId := range filesToRemove {
+
+		logMessage(fmt.Sprintf("Deleting media Id `%v' at `%v'", mediaId, photoFilePath), true)
+		os.Remove(photoFilePath)
+		metadata.RemoveItemById(mediaId, metadataFile)
+	}
+
 }
 
 
