@@ -18,12 +18,33 @@ type MediaMetadata struct {
 	Filename string
 }
 
+
+/**
+ * Saves the metadata to its json file
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   string   The metadata json filename
+ * @return  void
+**/
+ 
 func (sm SetMetadata) Save(metadataFile string) {
 
 	metadataBytes, _ := json.Marshal(sm)
 	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 }
 
+
+/**
+ * Removes a media item from the metadata and saves the metadata to disk
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   string   The media id to remove
+ * @param   string   The metadata filename
+ * @return  void
+**/
+ 
 func (sm *SetMetadata) RemoveItemById (id string, metadataFile string) {
 
 	var newListOfMedia = []MediaMetadata{ }
@@ -39,6 +60,17 @@ func (sm *SetMetadata) RemoveItemById (id string, metadataFile string) {
 	sm.Save(metadataFile)
 }
 
+
+/**
+ * Removes a media item by filename instead of id, and saves the metadata to disk
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   string   The filename to remove
+ * @param   string   The metadata json filename
+ * @return  void
+**/
+ 
 func (sm *SetMetadata) RemoveItemByFilename (fileName string, metadataFile string) {
 
 	var newListOfMedia = []MediaMetadata{ }
@@ -54,6 +86,17 @@ func (sm *SetMetadata) RemoveItemByFilename (fileName string, metadataFile strin
 	sm.Save(metadataFile)
 }
 
+
+/**
+ * Adds or updates a media item to the metadata and saves the metadata to disk.
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   MediaMetadata    The item to add or update
+ * @param   string           The json filename 
+ * @return  void
+**/
+ 
 func (sm *SetMetadata) AddOrUpdate (p MediaMetadata, metadataFile string) {
 
 	// See if there is an existing entry for this photo
@@ -77,3 +120,5 @@ func (sm *SetMetadata) AddOrUpdate (p MediaMetadata, metadataFile string) {
 
 	sm.Save(metadataFile)
 }
+
+

@@ -36,9 +36,15 @@ type OAuthSecrets struct {
 	MinitokenUrl string
 }
 
-// Loads the secret oauth data for this app from a json file. This file
-// should not get committed to source control. (The entire cache directory
-// should be ignored, really.)
+/**
+ * Loads the secret OAuth data for this app from a json file. This file
+ * should not get committed to source control.
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @return  OAuthSecrets
+**/
+ 
 func loadOAuthSecrets() OAuthSecrets {
 
 	s := new(OAuthSecrets)
@@ -58,8 +64,16 @@ func loadOAuthSecrets() OAuthSecrets {
 	return *s
 }
 
-// Checks for cached oauth credentials so we don't need to
-// go through the oauth process again.
+
+/**
+ * Checks for cached OAuth credentials so we don't need
+ * to go through the OAuth process again.
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @return  FlickrOAuth
+**/
+ 
 func checkForExistingOAuthCredentials() FlickrOAuth {
 
 	var oauth = new(FlickrOAuth)
@@ -73,7 +87,15 @@ func checkForExistingOAuthCredentials() FlickrOAuth {
 	return *oauth
 }
 
-// Does the oauth handshaking with flickr and the user
+/**
+ * Does the OAuth handshaking between Flickr and the user, if 
+ * we didn't find any cached credentials.
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @return  FlickrOAuth
+**/
+ 
 func doOAuthSetup() FlickrOAuth {
 
 	oauthResult := FlickrOAuth{"", "", "", "", ""}
@@ -174,7 +196,19 @@ func doOAuthSetup() FlickrOAuth {
 	return oauthResult
 }
 
-// Generates an oauth url for flickr based on the method the user wants and any extra params
+
+/**
+ * Generates an OAuth url for flickr based on the method the user wants and any extra params
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   string               The base url
+ * @param   string               The method (api name) we're using
+ * @param   FlickrOAuth          The OAuth app configuration
+ * @param   map[string]string    Any extra params for the api call
+ * @return  string               The resulting OAuth url for use in a GET request
+**/
+ 
 func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraParams map[string]string) string {
 
 	secrets := loadOAuthSecrets()
@@ -216,7 +250,18 @@ func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraPara
 	return requestUrl
 }
 
-// Generates the exchange token url, used during oauth handshaking
+
+/**
+ * Generates the exchange token url, used during oauth handshaking
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   string    The user token
+ * @param   string    The OAuth token
+ * @param   string    The app's token secret
+ * @return  string    The url to use to exchange the token 
+**/
+ 
 func generateExchangeUrl(userToken string, oauthToken string, tokenSecret string) string {
 
 	secrets := loadOAuthSecrets()
@@ -244,7 +289,14 @@ func generateExchangeUrl(userToken string, oauthToken string, tokenSecret string
 	return requestUrl
 }
 
-// Generates the url used to request a token during oauth handshaking
+/**
+ * Generates the url used to request a token during OAuth handshaking
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @return  string    The url to request a token
+**/
+ 
 func generateRequestTokenUrl() string {
 
 	secrets := loadOAuthSecrets()
@@ -279,7 +331,19 @@ func generateRequestTokenUrl() string {
 	return requestUrl
 }
 
-// Creates the api signature for flickr's oauth implementation
+/**
+ * Creates the api signature for flickr's oauth implementation
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   string                The base url
+ * @param   string                The method (api name)
+ * @param   map[string]string     Params for the api call
+ * @param   string                Secret
+ * @param   string                Token secret
+ * @return  string                The api call's HMAC secret
+**/
+ 
 func createApiSignature(
 	baseUrl string,
 	method string,
@@ -328,7 +392,14 @@ func createApiSignature(
 	return result
 }
 
-// Generates an oauth nonce, just the unix timestamp right now.
+/**
+ * Create an OAuth nonce to be used for a request, just the Unix timestamp.
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @return  string    The Nonce
+**/
+ 
 func generateNonce() string {
 
 	// Just use the current time
