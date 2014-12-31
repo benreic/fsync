@@ -186,7 +186,7 @@ func processSet(appFlickrOAuth FlickrOAuth, v Photoset) {
 		}
 
 		// Save media to disk
-		saveUrlToFile(appFlickrOAuth, sourceUrl, fullPath)
+		saveUrlToFile(appFlickrOAuth, func() string { return sourceUrl }, fullPath)
 
 		// Add the photos metadata to the list and write the metadata file out
 		saveMetadataToFile(vv, fileName, &metadata, metadataFile)
@@ -404,12 +404,12 @@ func fileExists(fullPath string) bool {
 
 }
 
-func saveUrlToFile(flickrOauth FlickrOAuth, url string, fullPath string) {
+func saveUrlToFile(flickrOauth FlickrOAuth, urlGenerator UrlFunc, fullPath string) {
 
 	var err error
 	var body []byte
 
-	body, err = makeGetRequest(url)
+	body, err = makeGetRequest(urlGenerator)
 	if err != nil {
 		panic(err)
 	}

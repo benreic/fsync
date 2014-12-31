@@ -2,10 +2,8 @@ package main
 
 import (
 	"encoding/xml"
-	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 var apiBaseUrl = "https://api.flickr.com/services/rest"
@@ -97,9 +95,7 @@ func (a ByDateCreated) Less(i, j int) bool { return a[i].DateCreated < a[j].Date
 
 func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 
-	requestUrl := generateGetSetsUrl(flickrOAuth)
-
-	body, err := makeGetRequest(requestUrl)
+	body, err := makeGetRequest(func() string { return generateGetSetsUrl(flickrOAuth) })
 	if err != nil {
 		panic(err)
 	}
@@ -107,7 +103,7 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 	sets := PhotosetsResponse{}
 	err = xml.Unmarshal(body, &sets)
 	if err != nil {
-		logMessage(fmt.Sprintf("Could not unmarshal body for `%v'. Check logs for body detail.", requestUrl), true)
+		logMessage("Could not unmarshal body, check logs for body detail.", true)
 		logMessage(string(body), false)
 		panic(err)
 	}
@@ -136,7 +132,6 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 	photos := map[string]Photo{}
 	currentPage := 1
 	pageSize := 500
-	retryCount := 0
 
 	for {
 		
@@ -146,11 +141,7 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 			extras["photoset_id"] = setId
 		}
 
-		retryApiCall := false
-		
-		requestUrl := generateOAuthUrl(apiBaseUrl, apiName, flickrOAuth, extras)
-
-		body, err = makeGetRequest(requestUrl)
+		body, err = makeGetRequest(func() string { return generateOAuthUrl(apiBaseUrl, apiName, flickrOAuth, extras) })
 		if err != nil {
 			panic(err)
 		}
@@ -181,27 +172,18 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 			err = xml.Unmarshal(body, &errorResponse)
 			if err != nil {
 
-				if strings.Contains(string(body), "oauth_problem=signature_invalid") && apiName == getPhotosNotInSetName && retryCount < 10 {
-					retryApiCall = true					
-					retryCount++
-					responsePhotos = []Photo{}
-				} else {
-
-					logMessage(fmt.Sprintf("Could not unmarshal body for `%v' Tried PhotosResponse and then FlickrErrorResponse. Check logs for body detail.", requestUrl), true)
-					logMessage(string(body), false)
-					panic(err)
-				}
-			}
-
-			if ! retryApiCall {
-				// The "good" error code
-				if errorResponse.Error.Code == "1" {
-					break
-				}
-
-				logMessage(fmt.Sprintf("An error occurred while getting photos for the set. Check the body in the logs. Url: %v", requestUrl), false)
+				logMessage("Could not unmarshal body, check logs for body detail.", true)
 				logMessage(string(body), false)
+				panic(err)
 			}
+
+			// The "good" error code
+			if errorResponse.Error.Code == "1" {
+				break
+			}
+
+			logMessage("An error occurred while getting photos for the set. Check the body in the logs.", false)
+			logMessage(string(body), false)
 		} 
 
 		for _, v := range responsePhotos {
@@ -210,17 +192,11 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 
 		// If we didn't get 500 photos, then we're done.
 		// There are no more photos to get.
-		if len(responsePhotos) < pageSize && ! retryApiCall {
+		if len(responsePhotos) < pageSize {
 			break
 		}
 
-		if ! retryApiCall {
-			retryCount = 0
-			currentPage++
-		} else {
-			logMessage("Got an error, retrying call, attempt #" + strconv.Itoa(retryCount), false)
-		}
-
+		currentPage++
 	}
 
 	return photos
@@ -230,12 +206,11 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
 
 	extras := map[string]string{"photo_id": photo.Id}
-	requestUrl := generateOAuthUrl(apiBaseUrl, "flickr.photos.getSizes", flickrOauth, extras)
 
 	var err error
 	var body []byte
 
-	body, err = makeGetRequest(requestUrl)
+	body, err = makeGetRequest(func() string { return generateOAuthUrl(apiBaseUrl, "flickr.photos.getSizes", flickrOauth, extras) })
 	if err != nil {
 		panic(err)
 	}
@@ -243,7 +218,7 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
 	response := PhotoSizeResponse{}
 	err = xml.Unmarshal(body, &response)
 	if err != nil {
-		logMessage(fmt.Sprintf("Could not unmarshal body for `%v'. Check logs for body detail.", requestUrl), true)
+		logMessage("Could not unmarshal body, check logs for body detail.", true)
 		logMessage(string(body), false)
 		return "", ""
 	}

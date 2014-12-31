@@ -78,12 +78,14 @@ func doOAuthSetup() FlickrOAuth {
 
 	oauthResult := FlickrOAuth{"", "", "", "", ""}
 
-	// Get the request token url
-	var oauth_request_token_request = generateRequestTokenUrl()
-
 	// Get the response from the request token url
 	// and check for errors
-	body, err := makeGetRequest(oauth_request_token_request)
+	body, err := makeGetRequest(func() string { return generateRequestTokenUrl() })
+
+	if err != nil {
+		logMessage(fmt.Sprintf("Hmm, something went wrong: %v", err), true)
+		return oauthResult
+	}
 
 	// Parse the oauth token and oauth token secret values
 	// from the body response.
@@ -108,11 +110,13 @@ func doOAuthSetup() FlickrOAuth {
 
 	// Bail if we don't have a token or token secret
 	if oauth_token == "" {
-		panic("No oauth token found")
+		logMessage("An error occurred, there was no token: " + string(body), false)
+		return oauthResult
 	}
 
 	if oauth_token_secret == "" {
-		panic("No oauth token secret found")
+		logMessage("An error occurred, there was no secret: " + string(body), false)
+		return oauthResult
 	}
 
 	// Send the user to flickr to authorize us
@@ -131,11 +135,8 @@ func doOAuthSetup() FlickrOAuth {
 	var userToken = ""
 	_, err = fmt.Scanln(&userToken)
 
-	// Generate the exchange token url
-	exchangeForRealTokenUrl := generateExchangeUrl(userToken, oauth_token, oauth_token_secret)
-
 	// Get the response and check for errors
-	body, err = makeGetRequest(exchangeForRealTokenUrl)
+	body, err = makeGetRequest(func() string { return generateExchangeUrl(userToken, oauth_token, oauth_token_secret) });
 
 	// Parse the result for the oauth token
 	parts = strings.Split(string(body), "&")
@@ -260,8 +261,16 @@ func generateRequestTokenUrl() string {
 
 	var requestUrl = oauth_request_token_url + "?"
 
-	for key, element := range params {
-		requestUrl += key + "=" + element + "&"
+	sortedKeys := []string{}
+
+	for key, _ := range params {
+		sortedKeys = append(sortedKeys, key)
+	}
+
+	sort.Strings(sortedKeys)
+
+	for _, key := range sortedKeys {
+		requestUrl += key + "=" + params[key]+ "&"
 	}
 
 	requestUrl = strings.TrimRight(requestUrl, "&")
