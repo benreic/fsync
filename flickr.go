@@ -43,7 +43,7 @@ type Photoset struct {
 	Title       string   `xml:"title"`
 }
 
-func (ps Photoset) CleanTitle() string { 
+func (ps Photoset) CleanTitle() string {
 
 	invalidChars := []string{"\\", "/", ":", ">", "<", "?", "\"", "|", "*"}
 
@@ -57,8 +57,8 @@ func (ps Photoset) CleanTitle() string {
 
 // Get photos not in a set
 type PhotosNotInSetResponse struct {
-	XMLName     xml.Name `xml:"rsp"`
-	Photos      []Photo  `xml:"photos>photo"`
+	XMLName xml.Name `xml:"rsp"`
+	Photos  []Photo  `xml:"photos>photo"`
 }
 
 // Get list of photos from a set
@@ -67,14 +67,11 @@ type PhotosResponse struct {
 	Set     PhotosPhotoset
 }
 
-
 type PhotosPhotoset struct {
 	XMLName xml.Name `xml:"photoset"`
 	Id      string   `xml:"id,attr"`
 	Photos  []Photo  `xml:"photo"`
 }
-
-
 
 // Used by both in-set and not-in-set photos responses
 type Photo struct {
@@ -106,7 +103,6 @@ func (a ByDateCreated) Len() int           { return len(a) }
 func (a ByDateCreated) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByDateCreated) Less(i, j int) bool { return a[i].DateCreated < a[j].DateCreated }
 
-
 /**
  * Gets all sets for the user
  *
@@ -115,7 +111,7 @@ func (a ByDateCreated) Less(i, j int) bool { return a[i].DateCreated < a[j].Date
  * @param   FlickrOAuth    The flickr oauth setup
  * @return  PhotosetsResponse
 **/
- 
+
 func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 
 	body, err := makeGetRequest(func() string { return generateGetSetsUrl(flickrOAuth) })
@@ -136,7 +132,6 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 	return sets
 }
 
-
 /**
  * Gets all the media for a given set
  *
@@ -145,13 +140,11 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
  * @param   FlickrOAuth        The flickr oauth setup
  * @return  map[string]Photo   The list of media files, indexed by Flickr Id
 **/
- 
+
 func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
 
 	return getAllPhotos(flickrOAuth, getPhotosInSetName, set.Id)
 }
-
-
 
 /**
  * Gets all media that is not included in a set
@@ -161,12 +154,11 @@ func getPhotosForSet(flickrOAuth FlickrOAuth, set Photoset) map[string]Photo {
  * @param   FlickrOAuth        The flickr oauth setup
  * @return  map[string]Photo   The list of media files indexed by Flickr Id
 **/
- 
+
 func getPhotosNotInSet(flickrOAuth FlickrOAuth) map[string]Photo {
 
 	return getAllPhotos(flickrOAuth, getPhotosNotInSetName, "")
 }
-
 
 /**
  * Actually does the work to get the media files
@@ -178,7 +170,7 @@ func getPhotosNotInSet(flickrOAuth FlickrOAuth) map[string]Photo {
  * @param   string             The set id of media files we're getting.
  * @return  map[string]Photo   The list of media files indexed by Flickr Id
 **/
- 
+
 func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[string]Photo {
 
 	var err error
@@ -188,7 +180,7 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 	pageSize := 500
 
 	for {
-		
+
 		extras := map[string]string{"page": strconv.Itoa(currentPage)}
 		extras["per_page"] = strconv.Itoa(pageSize)
 		if len(setId) > 0 {
@@ -238,7 +230,7 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 
 			logMessage("An error occurred while getting photos for the set. Check the body in the logs.", false)
 			logMessage(string(body), false)
-		} 
+		}
 
 		for _, v := range responsePhotos {
 			photos[v.Id] = v
@@ -256,7 +248,6 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 	return photos
 }
 
-
 /**
  * Gets the original size url for a given Flickr media
  *
@@ -266,7 +257,7 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
  * @param   Photo              The flickr media to consider
  * @return  string,string      A photo url and a video url
 **/
- 
+
 func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
 
 	extras := map[string]string{"photo_id": photo.Id}
@@ -302,7 +293,6 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
 	return photoUrl, videoUrl
 }
 
-
 /**
  * Helper function to create the url used to get the list of sets
  *
@@ -311,7 +301,7 @@ func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
  * @param   FlickrOAuth        The flickr oauth setup
  * @return  string             The url to use
 **/
- 
+
 func generateGetSetsUrl(flickrOauth FlickrOAuth) string {
 
 	requestUrl := generateOAuthUrl(apiBaseUrl, "flickr.photosets.getList", flickrOauth, nil)

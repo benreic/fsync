@@ -10,10 +10,10 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"runtime"
+	"sort"
 	"strings"
 	"time"
-	"sort"
-	"runtime"
 )
 
 var oauth_request_token_url = "https://www.flickr.com/services/oauth/request_token"
@@ -44,7 +44,7 @@ type OAuthSecrets struct {
  *
  * @return  OAuthSecrets
 **/
- 
+
 func loadOAuthSecrets() OAuthSecrets {
 
 	s := new(OAuthSecrets)
@@ -64,7 +64,6 @@ func loadOAuthSecrets() OAuthSecrets {
 	return *s
 }
 
-
 /**
  * Checks for cached OAuth credentials so we don't need
  * to go through the OAuth process again.
@@ -73,7 +72,7 @@ func loadOAuthSecrets() OAuthSecrets {
  *
  * @return  FlickrOAuth
 **/
- 
+
 func checkForExistingOAuthCredentials() FlickrOAuth {
 
 	var oauth = new(FlickrOAuth)
@@ -88,14 +87,14 @@ func checkForExistingOAuthCredentials() FlickrOAuth {
 }
 
 /**
- * Does the OAuth handshaking between Flickr and the user, if 
+ * Does the OAuth handshaking between Flickr and the user, if
  * we didn't find any cached credentials.
  *
  * @author Ben Reichelt <ben.reichelt@gmail.com>
  *
  * @return  FlickrOAuth
 **/
- 
+
 func doOAuthSetup() FlickrOAuth {
 
 	oauthResult := FlickrOAuth{"", "", "", "", ""}
@@ -132,17 +131,17 @@ func doOAuthSetup() FlickrOAuth {
 
 	// Bail if we don't have a token or token secret
 	if oauth_token == "" {
-		logMessage("An error occurred, there was no token: " + string(body), false)
+		logMessage("An error occurred, there was no token: "+string(body), false)
 		return oauthResult
 	}
 
 	if oauth_token_secret == "" {
-		logMessage("An error occurred, there was no secret: " + string(body), false)
+		logMessage("An error occurred, there was no secret: "+string(body), false)
 		return oauthResult
 	}
 
 	// Send the user to flickr to authorize us
-	url := "https://www.flickr.com/services/oauth/authorize?perms=read&oauth_token="+oauth_token
+	url := "https://www.flickr.com/services/oauth/authorize?perms=read&oauth_token=" + oauth_token
 	switch runtime.GOOS {
 	case "linux":
 		exec.Command("xdg-open", url).Start()
@@ -158,7 +157,7 @@ func doOAuthSetup() FlickrOAuth {
 	_, err = fmt.Scanln(&userToken)
 
 	// Get the response and check for errors
-	body, err = makeGetRequest(func() string { return generateExchangeUrl(userToken, oauth_token, oauth_token_secret) });
+	body, err = makeGetRequest(func() string { return generateExchangeUrl(userToken, oauth_token, oauth_token_secret) })
 
 	// Parse the result for the oauth token
 	parts = strings.Split(string(body), "&")
@@ -196,7 +195,6 @@ func doOAuthSetup() FlickrOAuth {
 	return oauthResult
 }
 
-
 /**
  * Generates an OAuth url for flickr based on the method the user wants and any extra params
  *
@@ -208,7 +206,7 @@ func doOAuthSetup() FlickrOAuth {
  * @param   map[string]string    Any extra params for the api call
  * @return  string               The resulting OAuth url for use in a GET request
 **/
- 
+
 func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraParams map[string]string) string {
 
 	secrets := loadOAuthSecrets()
@@ -250,7 +248,6 @@ func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraPara
 	return requestUrl
 }
 
-
 /**
  * Generates the exchange token url, used during oauth handshaking
  *
@@ -259,9 +256,9 @@ func generateOAuthUrl(baseUrl string, method string, auth FlickrOAuth, extraPara
  * @param   string    The user token
  * @param   string    The OAuth token
  * @param   string    The app's token secret
- * @return  string    The url to use to exchange the token 
+ * @return  string    The url to use to exchange the token
 **/
- 
+
 func generateExchangeUrl(userToken string, oauthToken string, tokenSecret string) string {
 
 	secrets := loadOAuthSecrets()
@@ -296,7 +293,7 @@ func generateExchangeUrl(userToken string, oauthToken string, tokenSecret string
  *
  * @return  string    The url to request a token
 **/
- 
+
 func generateRequestTokenUrl() string {
 
 	secrets := loadOAuthSecrets()
@@ -322,7 +319,7 @@ func generateRequestTokenUrl() string {
 	sort.Strings(sortedKeys)
 
 	for _, key := range sortedKeys {
-		requestUrl += key + "=" + params[key]+ "&"
+		requestUrl += key + "=" + params[key] + "&"
 	}
 
 	requestUrl = strings.TrimRight(requestUrl, "&")
@@ -343,7 +340,7 @@ func generateRequestTokenUrl() string {
  * @param   string                Token secret
  * @return  string                The api call's HMAC secret
 **/
- 
+
 func createApiSignature(
 	baseUrl string,
 	method string,
@@ -399,7 +396,7 @@ func createApiSignature(
  *
  * @return  string    The Nonce
 **/
- 
+
 func generateNonce() string {
 
 	// Just use the current time

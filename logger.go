@@ -15,7 +15,7 @@ import (
  *
  * @return  Logger
 **/
- 
+
 func createLogger() *log.Logger {
 
 	t := time.Now()
@@ -31,10 +31,10 @@ func createLogger() *log.Logger {
 
 	filePath := filepath.Join(logDir, "fsync-"+filePart+".log")
 	var fi *os.File
-	if ! fileExists(filePath) {
+	if !fileExists(filePath) {
 		fi, _ = os.Create(filePath)
 	} else {
-		fi, _ = os.OpenFile(filePath, os.O_RDWR|os.O_APPEND, 0755);
+		fi, _ = os.OpenFile(filePath, os.O_RDWR|os.O_APPEND, 0755)
 	}
 
 	l := log.New(fi, "", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
@@ -50,7 +50,7 @@ func createLogger() *log.Logger {
  * @param   bool     Determines if we should echo the message as well
  * @return  void
 **/
- 
+
 func logMessage(message string, echo bool) {
 
 	Flogger.Println(message)

@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 /**
  * Main function to kick off processing of Flickr sets
  *
@@ -18,7 +17,7 @@ import (
  *
  * @return  void
 **/
- 
+
 func processSets() {
 
 	appFlickrOAuth := checkForExistingOAuthCredentials()
@@ -40,8 +39,6 @@ func processSets() {
 	}
 }
 
-
-
 /**
  * Figures out which sets to process based on command line params
  *
@@ -50,11 +47,11 @@ func processSets() {
  * @param   FlickrOAuth   The oauth configuration
  * @return  []Photoset    The list of photosets to process
 **/
- 
+
 func determineSetsToProcess(appFlickrOAuth FlickrOAuth) []Photoset {
 
 	var sets []Photoset
-	if ! *onlyPhotosNotInSet {
+	if !*onlyPhotosNotInSet {
 
 		// Get the sets, ordered by created date
 		flickrSets := getSets(appFlickrOAuth)
@@ -69,8 +66,7 @@ func determineSetsToProcess(appFlickrOAuth FlickrOAuth) []Photoset {
 		}
 	}
 
-
-	if *setId == "" || *onlyPhotosNotInSet  {
+	if *setId == "" || *onlyPhotosNotInSet {
 		// Handle photos not in a set if we haven't targeted
 		// a specific set
 		noSet := new(Photoset)
@@ -82,7 +78,6 @@ func determineSetsToProcess(appFlickrOAuth FlickrOAuth) []Photoset {
 	return sets
 }
 
-
 /**
  * Processes a single set
  *
@@ -92,7 +87,7 @@ func determineSetsToProcess(appFlickrOAuth FlickrOAuth) []Photoset {
  * @param   Photoset      The set to process
  * @return  void
 **/
- 
+
 func processSingleSet(appFlickrOAuth FlickrOAuth, setToProcess Photoset) {
 
 	// Create the directory for this set with the set's created
@@ -135,7 +130,7 @@ func processSingleSet(appFlickrOAuth FlickrOAuth, setToProcess Photoset) {
 			logMessage(fmt.Sprintf("Skipping set: `%v'. Found %v existing files.", setToProcess.Title, strconv.Itoa(len(existingFiles))), false)
 			return
 		}
-		
+
 		formatString := "Processing set: `%v'. Found %v existing files on disk, %v files in metadata, and %v files on Flickr."
 		logMessage(fmt.Sprintf(formatString, setToProcess.Title, strconv.Itoa(len(existingFiles)), strconv.Itoa(len(metadata.Photos)), strconv.Itoa(len(flickrItems))), false)
 	} else {
@@ -186,12 +181,12 @@ func processSingleSet(appFlickrOAuth FlickrOAuth, setToProcess Photoset) {
 		logMessage(fmt.Sprintf("Saved %v `%v' to %v.", mediaType, media.Title, fullPath), false)
 	}
 
-	// Look through all the files in the metadata and find the ones that no longer exist in 
-	// Flickr. Note them and then loop over those to delete them from the filesystem and 
+	// Look through all the files in the metadata and find the ones that no longer exist in
+	// Flickr. Note them and then loop over those to delete them from the filesystem and
 	// remove them from the metadata
 	filesToRemove := map[string]string{}
 	for _, pm := range metadata.Photos {
-		if _, ok := flickrItems[pm.PhotoId]; ! ok {
+		if _, ok := flickrItems[pm.PhotoId]; !ok {
 			fullPath = filepath.Join(dir, pm.Filename)
 			filesToRemove[fullPath] = pm.PhotoId
 		}
@@ -206,7 +201,6 @@ func processSingleSet(appFlickrOAuth FlickrOAuth, setToProcess Photoset) {
 
 }
 
-
 /**
  * Ensures the directory for a set exists on disk
  *
@@ -215,8 +209,8 @@ func processSingleSet(appFlickrOAuth FlickrOAuth, setToProcess Photoset) {
  * @param   Photoset   The set to consider
  * @return  string     The resulting directory path
 **/
- 
-func ensureDirForSet(set Photoset) string { 
+
+func ensureDirForSet(set Photoset) string {
 
 	var dir string
 	if len(set.Id) > 0 {

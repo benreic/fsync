@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 )
 
-
 /**
  * Finds duplicate media files and lists them to the console
  *
@@ -18,7 +17,7 @@ import (
 func findDupes() {
 
 	duplicates := map[string][]string{}
-	visitor := func (path string, f os.FileInfo, err error) error {
+	visitor := func(path string, f os.FileInfo, err error) error {
 
 		if f.IsDir() {
 			return nil
@@ -28,7 +27,7 @@ func findDupes() {
 			return nil
 		}
 
-		if _, ok := duplicates[f.Name()]; ! ok {
+		if _, ok := duplicates[f.Name()]; !ok {
 			duplicates[f.Name()] = []string{}
 		}
 
@@ -46,7 +45,7 @@ func findDupes() {
 			continue
 		}
 
-		totalDupes += len(paths)-1
+		totalDupes += len(paths) - 1
 		logMessage(fmt.Sprintf("File `%v' was found %v times.", fileName, len(paths)), false)
 		for _, path := range paths {
 			logMessage(path, true)
@@ -54,7 +53,7 @@ func findDupes() {
 	}
 
 	photoCount, movieCount := countMediaFiles()
-	realMediaCount := (photoCount + movieCount) - totalDupes;
+	realMediaCount := (photoCount + movieCount) - totalDupes
 
 	logMessage(fmt.Sprintf("Total dupes: %v. Real count of media files: %v", totalDupes, realMediaCount), true)
 }

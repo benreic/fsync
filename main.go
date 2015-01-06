@@ -19,7 +19,7 @@ var Flogger *log.Logger
 var setMetadataFileName = "metadata.json"
 
 func main() {
- 
+
 	flag.Parse()
 
 	Flogger = createLogger()
@@ -41,5 +41,3 @@ func main() {
 
 	processSets()
 }
-
-

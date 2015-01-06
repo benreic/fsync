@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var lastRequestTime time.Time
@@ -22,7 +22,7 @@ type UrlFunc func() string
  * Also check for an "invalid signature" error from Flickr
  * which seems to happen sometimes. If we run into this
  * error, we retry up to 10 times, generating a new url
- * on each retry, which is why we pass in a UrlFunc to the 
+ * on each retry, which is why we pass in a UrlFunc to the
  * function, rather than just a string url.
  *
  * Its possible I'm calculating the api signature incorrectly
@@ -33,11 +33,11 @@ type UrlFunc func() string
  * @param   UrlFunc         The function to generate a url for retrying a failed request
  * @return  []byte, error   The byte array of the response and any error
 **/
- 
+
 func makeGetRequest(generateUrlFunction UrlFunc) ([]byte, error) {
 
 	currentTime := time.Now()
-	if ! lastRequestTime.IsZero() {
+	if !lastRequestTime.IsZero() {
 
 		// Sleep until we make sure we don't make requests faster than 1/sec
 		nano := currentTime.Sub(lastRequestTime)
@@ -72,7 +72,7 @@ func makeGetRequest(generateUrlFunction UrlFunc) ([]byte, error) {
 
 		if strings.Contains(string(body), "oauth_problem=signature_invalid") && retryCount < 10 {
 			retryCount++
-			logMessage("Sleeping and retrying request, retry #" + strconv.Itoa(retryCount), false)
+			logMessage("Sleeping and retrying request, retry #"+strconv.Itoa(retryCount), false)
 			time.Sleep(1 * time.Second)
 		} else {
 			return body, nil

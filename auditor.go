@@ -39,7 +39,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[str
 			for _, fi := range existingFiles {
 				if strings.Index(fi.Name(), mediaId) == 0 {
 					logMessage(fmt.Sprintf("Media Id `%v' (%v) does not exist in the metadata, but the media appears to exist on disk with file name `%v'. It needs to be added to the metadata.", mediaId, photo.Title, fi.Name()), true)
-					doLog = false	
+					doLog = false
 					break
 				}
 			}
@@ -53,7 +53,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[str
 	// Find photos that exist on disk, but not in Flickr, they need to be deleted.
 	for photoId, pm := range photoIdMap {
 
-		if _, ok := photos[photoId]; ! ok {
+		if _, ok := photos[photoId]; !ok {
 			logMessage(fmt.Sprintf("Media Id `%v' (%v) does not exist in Flickr and needs to be deleted.", photoId, pm.Title), true)
 		}
 	}
@@ -77,7 +77,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[str
 
 		// make the full file path from the filename
 		fullFileName := filepath.Join(setDir, fileName)
-		if ! fileExists(fullFileName) {
+		if !fileExists(fullFileName) {
 			logMessage(fmt.Sprintf("File exists in metadata, but not on disk. The file was either deleted or never saved correctly. This is a bug.: `%v'.", fullFileName), true)
 		}
 	}

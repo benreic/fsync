@@ -18,7 +18,6 @@ type MediaMetadata struct {
 	Filename string
 }
 
-
 /**
  * Saves the metadata to its json file
  *
@@ -27,13 +26,12 @@ type MediaMetadata struct {
  * @param   string   The metadata json filename
  * @return  void
 **/
- 
+
 func (sm SetMetadata) Save(metadataFile string) {
 
 	metadataBytes, _ := json.Marshal(sm)
 	ioutil.WriteFile(metadataFile, metadataBytes, 0755)
 }
-
 
 /**
  * Removes a media item from the metadata and saves the metadata to disk
@@ -44,11 +42,11 @@ func (sm SetMetadata) Save(metadataFile string) {
  * @param   string   The metadata filename
  * @return  void
 **/
- 
-func (sm *SetMetadata) RemoveItemById (id string, metadataFile string) {
 
-	var newListOfMedia = []MediaMetadata{ }
-	for _, photo := range sm.Photos { 
+func (sm *SetMetadata) RemoveItemById(id string, metadataFile string) {
+
+	var newListOfMedia = []MediaMetadata{}
+	for _, photo := range sm.Photos {
 		if photo.PhotoId != id {
 			newListOfMedia = append(newListOfMedia, photo)
 		} else {
@@ -60,7 +58,6 @@ func (sm *SetMetadata) RemoveItemById (id string, metadataFile string) {
 	sm.Save(metadataFile)
 }
 
-
 /**
  * Removes a media item by filename instead of id, and saves the metadata to disk
  *
@@ -70,11 +67,11 @@ func (sm *SetMetadata) RemoveItemById (id string, metadataFile string) {
  * @param   string   The metadata json filename
  * @return  void
 **/
- 
-func (sm *SetMetadata) RemoveItemByFilename (fileName string, metadataFile string) {
 
-	var newListOfMedia = []MediaMetadata{ }
-	for _, photo := range sm.Photos { 
+func (sm *SetMetadata) RemoveItemByFilename(fileName string, metadataFile string) {
+
+	var newListOfMedia = []MediaMetadata{}
+	for _, photo := range sm.Photos {
 		if photo.Filename != fileName {
 			newListOfMedia = append(newListOfMedia, photo)
 		} else {
@@ -86,18 +83,17 @@ func (sm *SetMetadata) RemoveItemByFilename (fileName string, metadataFile strin
 	sm.Save(metadataFile)
 }
 
-
 /**
  * Adds or updates a media item to the metadata and saves the metadata to disk.
  *
  * @author Ben Reichelt <ben.reichelt@gmail.com>
  *
  * @param   MediaMetadata    The item to add or update
- * @param   string           The json filename 
+ * @param   string           The json filename
  * @return  void
 **/
- 
-func (sm *SetMetadata) AddOrUpdate (p MediaMetadata, metadataFile string) {
+
+func (sm *SetMetadata) AddOrUpdate(p MediaMetadata, metadataFile string) {
 
 	// See if there is an existing entry for this photo
 	// update the metadata if there is
@@ -113,12 +109,10 @@ func (sm *SetMetadata) AddOrUpdate (p MediaMetadata, metadataFile string) {
 	}
 
 	// Didn't find an existing one, so add to the metadata
-	if ! foundPhoto {
+	if !foundPhoto {
 		slice := append(sm.Photos, p)
 		sm.Photos = slice
 	}
 
 	sm.Save(metadataFile)
 }
-
-

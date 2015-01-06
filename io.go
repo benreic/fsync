@@ -14,7 +14,7 @@ import (
  * @param   string    The full path to the file to test
  * @return  bool
 **/
- 
+
 func fileExists(fullPath string) bool {
 
 	if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
@@ -25,7 +25,6 @@ func fileExists(fullPath string) bool {
 
 }
 
-
 /**
  * Given a UrlFunc and file path, save the contents of the url to the file location
  *
@@ -35,7 +34,7 @@ func fileExists(fullPath string) bool {
  * @param   string     The full path to save the contents to
  * @return  void
 **/
- 
+
 func saveUrlToFile(urlGenerator UrlFunc, fullPath string) {
 
 	var err error
@@ -49,7 +48,6 @@ func saveUrlToFile(urlGenerator UrlFunc, fullPath string) {
 	err = ioutil.WriteFile(fullPath, body, 0644)
 }
 
-
 /**
  * From a flickr url, get the filename piec
  *
@@ -58,7 +56,7 @@ func saveUrlToFile(urlGenerator UrlFunc, fullPath string) {
  * @param   string   The flickr url
  * @return  string   The filename extracted from the url
 **/
- 
+
 func getFileNameFromUrl(url string) string {
 
 	index := strings.LastIndex(url, "/")
@@ -68,7 +66,6 @@ func getFileNameFromUrl(url string) string {
 	return url[index+1:]
 }
 
-
 /**
  * Deletes a file from the filesystem
  *
@@ -77,7 +74,7 @@ func getFileNameFromUrl(url string) string {
  * @param   string   The full path to delete
  * @return  void
 **/
- 
+
 func deleteFile(fullPath string) {
 
 	os.Remove(fullPath)

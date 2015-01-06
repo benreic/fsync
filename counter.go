@@ -13,14 +13,12 @@ import (
  *
  * @return  void
 **/
- 
+
 func countFiles() {
 
 	photoCount, movieCount := countMediaFiles()
-	logMessage(fmt.Sprintf("Found %v media files, including duplicates (photos can be part of more than one album). (%v photos, %v movies)", (photoCount + movieCount), photoCount, movieCount), true)
+	logMessage(fmt.Sprintf("Found %v media files, including duplicates (photos can be part of more than one album). (%v photos, %v movies)", (photoCount+movieCount), photoCount, movieCount), true)
 }
-
-
 
 /**
  * Counts the number of media files
@@ -29,14 +27,14 @@ func countFiles() {
  *
  * @return  int,int   The number of photos and the number of videos
 **/
- 
-func countMediaFiles() (int,int) { 
+
+func countMediaFiles() (int, int) {
 
 	var photoCount = 0
 	var movieCount = 0
-	visitor := func (path string, f os.FileInfo, err error) error {
+	visitor := func(path string, f os.FileInfo, err error) error {
 
-		if ! f.IsDir() {
+		if !f.IsDir() {
 			return nil
 		}
 
