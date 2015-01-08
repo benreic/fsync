@@ -75,11 +75,11 @@ type PhotosPhotoset struct {
 
 // Used by both in-set and not-in-set photos responses
 type Photo struct {
-	XMLName xml.Name `xml:"photo"`
-	Id      string   `xml:"id,attr"`
-	Title   string   `xml:"title,attr"`
-	OriginalUrl string `xml:"url_o,attr"`
-	Media string `xml:"media,attr"`
+	XMLName     xml.Name `xml:"photo"`
+	Id          string   `xml:"id,attr"`
+	Title       string   `xml:"title,attr"`
+	OriginalUrl string   `xml:"url_o,attr"`
+	Media       string   `xml:"media,attr"`
 }
 
 // Get sizes of photos
