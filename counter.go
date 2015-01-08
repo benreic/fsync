@@ -43,6 +43,16 @@ func countMediaFiles() (int, int) {
 			photoCount += len(matches)
 		}
 
+		matches, _ = filepath.Glob(filepath.Join(path, "*.gif"))
+		if matches != nil {
+			photoCount += len(matches)
+		}
+
+		matches, _ = filepath.Glob(filepath.Join(path, "*.png"))
+		if matches != nil {
+			photoCount += len(matches)
+		}
+
 		matches, _ = filepath.Glob(filepath.Join(path, "*.mov"))
 		if matches != nil {
 			movieCount += len(matches)
