@@ -78,6 +78,8 @@ type Photo struct {
 	XMLName xml.Name `xml:"photo"`
 	Id      string   `xml:"id,attr"`
 	Title   string   `xml:"title,attr"`
+	OriginalUrl string `xml:"url_o,attr"`
+	Media string `xml:"media,attr"`
 }
 
 // Get sizes of photos
@@ -183,6 +185,7 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 
 		extras := map[string]string{"page": strconv.Itoa(currentPage)}
 		extras["per_page"] = strconv.Itoa(pageSize)
+		extras["extras"] = "media,url_o"
 		if len(setId) > 0 {
 			extras["photoset_id"] = setId
 		}
@@ -259,6 +262,10 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 **/
 
 func getOriginalSizeUrl(flickrOauth FlickrOAuth, photo Photo) (string, string) {
+
+	if photo.Media == "photo" {
+		return photo.OriginalUrl, ""
+	}
 
 	extras := map[string]string{"photo_id": photo.Id}
 
