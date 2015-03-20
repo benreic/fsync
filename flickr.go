@@ -22,6 +22,12 @@ type FlickrError struct {
 	Message string   `xml:"msg,attr"`
 }
 
+// Get a single set
+type SinglePhotosetResponse struct {
+	XMLName xml.Name `xml:"rsp"`
+	Set     Photoset `xml:"photoset"`
+}
+
 // Get list of sets
 type PhotosetsResponse struct {
 	XMLName      xml.Name `xml:"rsp"`
@@ -132,6 +138,34 @@ func getSets(flickrOAuth FlickrOAuth) PhotosetsResponse {
 	sort.Sort(ByDateCreated(sets.SetContainer.Sets))
 
 	return sets
+}
+
+/**
+ * Gets a set by set Id
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   FlickrOAuth    The flickr oauth setup
+ * @return  PhotosetsResponse
+**/
+
+func getSpecificSet(flickrOAuth FlickrOAuth, setId string) SinglePhotosetResponse {
+
+	extras := map[string]string{"photoset_id": setId}
+	body, err := makeGetRequest(func() string { return generateOAuthUrl(apiBaseUrl, "flickr.photosets.getInfo", flickrOAuth, extras) })
+	if err != nil {
+		panic(err)
+	}
+
+	set := SinglePhotosetResponse{}
+	err = xml.Unmarshal(body, &set)
+	if err != nil {
+		logMessage("Could not unmarshal body, check logs for body detail.", true)
+		logMessage(string(body), false)
+		panic(err)
+	}
+
+	return set
 }
 
 /**
