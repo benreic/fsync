@@ -359,13 +359,18 @@ func createApiSignature(
 
 	sort.Strings(sortedKeys)
 
-	// Add the url-encoded params
+	// Add the sorted, url-encoded params
 	for _, key := range sortedKeys {
-		sigBase += url.QueryEscape(key + "=" + params[key] + "&")
+		sigBase += url.QueryEscape(key + "=" + url.QueryEscape(params[key]) + "&")
 	}
 
 	// Remove the last url-encoded '&'
 	sigBase = strings.TrimRight(sigBase, "%26")
+
+	return generateSignatureFromString(sigBase, secret, tokenSecret)
+}
+
+func generateSignatureFromString(source string, secret string, tokenSecret *string) string {
 
 	// Create the HMAC key
 	var hmacKey = secret + "&"
@@ -375,7 +380,7 @@ func createApiSignature(
 
 	// create the hash using the hmac key and the signature base string
 	mac := hmac.New(sha1.New, []byte(hmacKey))
-	mac.Write([]byte(sigBase))
+	mac.Write([]byte(source))
 	expectedMAC := mac.Sum(nil)
 
 	// Encode the result in base64
@@ -385,6 +390,7 @@ func createApiSignature(
 
 	// Make a string from the bytes
 	result := string(d)
+	result = url.QueryEscape(result)
 
 	return result
 }
@@ -402,4 +408,28 @@ func generateNonce() string {
 	// Just use the current time
 	oauth_nonce = fmt.Sprintf("%v", time.Now().Unix())
 	return oauth_nonce
+}
+
+/**
+ * Generates the api signature for a debug_sbs value that
+ * Flickr returns when we have an invalid signature error.
+ *
+ * @author Ben Reichelt <ben.reichelt@gmail.com>
+ *
+ * @param   string   debugSbs
+ * @return  string
+**/
+
+func getApiSignature(debugSbs string) string {
+
+	secrets := loadOAuthSecrets()
+	appFlickrOAuth := checkForExistingOAuthCredentials()
+
+	if appFlickrOAuth.OAuthToken == "" {
+		logMessage("Can't print api signature, no OAuth credentials exist.", true)
+		return ""
+	}
+
+	signature := generateSignatureFromString(debugSbs, secrets.Secret, &appFlickrOAuth.OAuthTokenSecret)
+	return signature
 }
