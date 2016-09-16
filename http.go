@@ -72,7 +72,7 @@ func makeGetRequest(generateUrlFunction UrlFunc) ([]byte, error) {
 
 		if strings.Contains(string(body), "oauth_problem=signature_invalid") && retryCount < 10 {
 			retryCount++
-			logMessage("Sleeping and retrying request, retry #"+strconv.Itoa(retryCount), false)
+			logMessage("Sleeping and retrying request, retry #"+strconv.Itoa(retryCount)+". Url: `"+url+"'", false)
 			time.Sleep(1 * time.Second)
 		} else {
 			return body, nil
