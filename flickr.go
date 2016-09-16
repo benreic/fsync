@@ -226,7 +226,9 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 
 		body, err = makeGetRequest(func() string { return generateOAuthUrl(apiBaseUrl, apiName, flickrOAuth, extras) })
 		if err != nil {
-			panic(err)
+			logMessage("Could not unmarshal body, check logs for body detail.", true)
+			logMessage(string(body), false)
+			return map[string]Photo{}
 		}
 
 		responsePhotos := []Photo{}
@@ -257,7 +259,7 @@ func getAllPhotos(flickrOAuth FlickrOAuth, apiName string, setId string) map[str
 
 				logMessage("Could not unmarshal body, check logs for body detail.", true)
 				logMessage(string(body), false)
-				panic(err)
+				return map[string]Photo{}
 			}
 
 			// The "good" error code
