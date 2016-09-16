@@ -66,7 +66,7 @@ func determineSetsToProcess(appFlickrOAuth FlickrOAuth) []Photoset {
 		}
 	}
 
-	if len(sets) == 0 || *setId != "" {
+	if len(sets) == 0 && *setId != "" {
 		set := getSpecificSet(appFlickrOAuth, *setId)
 		sets = append(sets, set.Set)
 	}
