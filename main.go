@@ -14,6 +14,8 @@ var auditOnly = flag.Bool("audit", false, "Compares existing media with the medi
 var countOnly = flag.Bool("count", false, "Recursively counts all media files in the specified directory")
 var findDuplicates = flag.Bool("dupes", false, "Find and print media files that exist in multiple sets.")
 var onlyPhotosNotInSet = flag.Bool("onlyNonSet", false, "Skip all sets and only process media that are not in a set")
+var generateApiSignature = flag.Bool("genApiSig", false, "Print the api signature for a given request url. Useful when debugging an invalid signature response from Flickr. Paste the 'debug_sbs' value they send back.")
+var debugSbs = flag.String("debug_sbs", "", "The debug_sbs return parameter from Flickr.")
 var Flogger *log.Logger
 
 var setMetadataFileName = "metadata.json"
@@ -23,6 +25,14 @@ func main() {
 	flag.Parse()
 
 	Flogger = createLogger()
+
+	if *generateApiSignature == true {
+		signature := getApiSignature(*debugSbs)
+		if len(signature) > 0 {
+			fmt.Println(signature)
+		}
+		return
+	}
 
 	if *rootDirectory == "" {
 		fmt.Println("You must specify a root directory using -dir")
