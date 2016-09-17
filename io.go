@@ -3,8 +3,12 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"os/user"
+	"path"
 	"strings"
 )
+
+var perms os.FileMode = 0700
 
 /**
  * Determines if a file exists on disk
@@ -15,7 +19,7 @@ import (
  * @return  bool
 **/
 
-func fileExists(fullPath string) bool {
+func pathExists(fullPath string) bool {
 
 	if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
 		return true
@@ -78,4 +82,26 @@ func getFileNameFromUrl(url string) string {
 func deleteFile(fullPath string) {
 
 	os.Remove(fullPath)
+}
+
+func getUserFilePath(fileName string) string {
+
+	dir := ensureUserHomeDir()
+	filePath := path.Join(dir, fileName)
+	return filePath
+}
+
+func ensureUserHomeDir() string {
+
+	usr, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+
+	dir := path.Join(usr.HomeDir, ".fsync")
+	if !pathExists(dir) {
+		os.Mkdir(dir, perms)
+	}
+
+	return dir
 }

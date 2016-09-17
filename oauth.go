@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
-	"os"
 	"os/exec"
 	"runtime"
 	"sort"
@@ -19,8 +18,8 @@ import (
 var oauth_request_token_url = "https://www.flickr.com/services/oauth/request_token"
 var oauth_exchange_token_url = "https://www.flickr.com/services/oauth/access_token"
 var oauth_nonce = ""
-var cacheFile = "cache/oauth.json"
-var oauthSecretsFile = "cache/oauth-secrets.json"
+var cacheFile = "oauth.json"
+var oauthSecretsFile = "oauth-secrets.json"
 
 type FlickrOAuth struct {
 	FullName         string
@@ -36,6 +35,17 @@ type OAuthSecrets struct {
 	MinitokenUrl string
 }
 
+func (s OAuthSecrets) isValid() bool {
+
+	if len(s.ConsumerKey) == 0 ||
+		len(s.Secret) == 0 ||
+		len(s.MinitokenUrl) == 0 {
+		return false
+	}
+
+	return true
+}
+
 /**
  * Loads the secret OAuth data for this app from a json file. This file
  * should not get committed to source control.
@@ -48,17 +58,17 @@ type OAuthSecrets struct {
 func loadOAuthSecrets() OAuthSecrets {
 
 	s := new(OAuthSecrets)
-	if _, err := os.Stat(oauthSecretsFile); !os.IsNotExist(err) {
-		fileContents, _ := ioutil.ReadFile(oauthSecretsFile)
+	filePath := getUserFilePath(oauthSecretsFile)
+	if pathExists(filePath) {
+		fileContents, _ := ioutil.ReadFile(filePath)
 		if len(fileContents) > 0 {
 			json.Unmarshal(fileContents, &s)
 		} else {
-			panic("oauth-secrets.json file was empty.")
+			logMessage("oauth-secrets.json file was empty", false)
 		}
 	} else {
-		msg := fmt.Sprintf("No oauth secrets file found at: %v", oauthSecretsFile)
-		logMessage(msg, true)
-		panic(msg)
+		msg := fmt.Sprintf("No oauth secrets file found at: %v", filePath)
+		logMessage(msg, false)
 	}
 
 	return *s
@@ -76,8 +86,9 @@ func loadOAuthSecrets() OAuthSecrets {
 func checkForExistingOAuthCredentials() FlickrOAuth {
 
 	var oauth = new(FlickrOAuth)
-	if _, err := os.Stat(cacheFile); !os.IsNotExist(err) {
-		fileContents, _ := ioutil.ReadFile(cacheFile)
+	filePath := getUserFilePath(cacheFile)
+	if pathExists(filePath) {
+		fileContents, _ := ioutil.ReadFile(filePath)
 		if len(fileContents) > 0 {
 			json.Unmarshal(fileContents, &oauth)
 		}
@@ -188,7 +199,8 @@ func doOAuthSetup() FlickrOAuth {
 
 	b, err := json.Marshal(oauthResult)
 
-	err = ioutil.WriteFile(cacheFile, b, 0644)
+	filePath := getUserFilePath(cacheFile)
+	err = ioutil.WriteFile(filePath, b, perms)
 	if err != nil {
 		panic(err)
 	}

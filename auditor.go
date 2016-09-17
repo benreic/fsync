@@ -77,7 +77,7 @@ func auditSet(existingFiles []os.FileInfo, metadata *SetMetadata, photos map[str
 
 		// make the full file path from the filename
 		fullFileName := filepath.Join(setDir, fileName)
-		if !fileExists(fullFileName) {
+		if !pathExists(fullFileName) {
 			logMessage(fmt.Sprintf("File exists in metadata, but not on disk. The file was either deleted or never saved correctly. This is a bug.: `%v'.", fullFileName), true)
 		}
 	}

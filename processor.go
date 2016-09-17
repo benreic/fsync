@@ -116,7 +116,7 @@ func processSingleSet(appFlickrOAuth FlickrOAuth, setToProcess Photoset) {
 
 	// Read the existing metadata, or create a new struct if none is found,
 	// so we can pick up where we left off
-	if fileExists(metadataFile) {
+	if pathExists(metadataFile) {
 		existingMetadata, _ := ioutil.ReadFile(metadataFile)
 		json.Unmarshal(existingMetadata, &metadata)
 	} else {
@@ -172,7 +172,7 @@ func processSingleSet(appFlickrOAuth FlickrOAuth, setToProcess Photoset) {
 		fullPath = filepath.Join(dir, fileName)
 
 		// Skip files that exist
-		if fileExists(fullPath) {
+		if pathExists(fullPath) {
 			logMessage(fmt.Sprintf("Media existed at %v. Skipping.", fullPath), false)
 			metadata.AddOrUpdate(MediaMetadata{PhotoId: media.Id, Title: media.Title, Filename: fileName}, metadataFile)
 			continue

@@ -26,6 +26,12 @@ func main() {
 
 	Flogger = createLogger()
 
+	secrets := loadOAuthSecrets()
+	if !secrets.isValid() {
+		logMessage("Your OAuth secrets file doesn't exist or is invalid. See the log file for more details.", true)
+		return
+	}
+
 	if *generateApiSignature == true {
 		signature := getApiSignature(*debugSbs)
 		if len(signature) > 0 {

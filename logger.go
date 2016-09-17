@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
+	"path"
 	"time"
 )
 
@@ -23,15 +23,16 @@ func createLogger() *log.Logger {
 
 	filePart := t.Format(format)
 
-	logDir := filepath.Join(*rootDirectory, "logs")
-	err := os.MkdirAll(logDir, 0755)
+	logDir := ensureUserHomeDir()
+	logDir = path.Join(logDir, "logs")
+	err := os.MkdirAll(logDir, perms)
 	if err != nil {
 		panic(err)
 	}
 
-	filePath := filepath.Join(logDir, "fsync-"+filePart+".log")
+	filePath := path.Join(logDir, "fsync-"+filePart+".log")
 	var fi *os.File
-	if !fileExists(filePath) {
+	if !pathExists(filePath) {
 		fi, _ = os.Create(filePath)
 	} else {
 		fi, _ = os.OpenFile(filePath, os.O_RDWR|os.O_APPEND, 0755)
