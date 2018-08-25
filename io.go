@@ -46,14 +46,16 @@ func saveUrlToFile(urlGenerator UrlFunc, fullPath string) {
 
 	body, err = makeGetRequest(urlGenerator)
 	if err != nil {
-		panic(err)
+		url := urlGenerator()
+		logMessage(fmt.Sprintf("Could not download file at url. Skipping file. Url: '%v'. Error: '%v'.", url, err.Error()), true)
+		return
 	}
 
 	err = ioutil.WriteFile(fullPath, body, 0644)
 }
 
 /**
- * From a flickr url, get the filename piec
+ * From a flickr url, get the filename piece.
  *
  * @author Ben Reichelt <ben.reichelt@gmail.com>
  *
